@@ -1,0 +1,77 @@
+# Dependencies
+node_modules/
+
+
+# Build outputs
+dist/
+dist-electron/
+build/
+out/
+release/
+releases/
+
+
+# Electron package outputs
+*.dmg
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.snap
+*.msi
+*.blockmap
+latest.yml
+latest-mac.yml
+latest-linux.yml
+
+
+# TypeScript / Vite / Vue
+*.tsbuildinfo
+.vite/
+.cache/
+
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+
+# VS Code
+.vscode/
+
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+
+# Package manager cache
+.pnpm-store/
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
