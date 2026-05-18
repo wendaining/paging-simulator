@@ -516,3 +516,133 @@ curl 'http://localhost:3000/api/instructions?seed=1'
 - 非法 seed 会抛出错误。
 
 当前 `npm test` 已通过，说明访问序列生成逻辑满足本阶段要求。
+
+## 第五阶段：实现模拟器基础流程
+
+本阶段实现了最小可运行的分页模拟器流程，并提供了 `GET /api/simulations?algorithm=fifo&seed=1` 接口。
+
+### 模拟器状态
+
+模拟器状态定义在 `src/types/simulation.ts` 中：
+
+```ts
+export interface SimulationState {
+    memoryFrames: MemoryFrameSnapshot[];
+    fifoQueue: MemoryFrameNumber[];
+    pageFaultCount: number;
+}
+```
+
+它包含三部分：
+
+- `memoryFrames`：当前主存中的 4 个内存块。
+- `fifoQueue`：FIFO 使用的队列，记录页面进入内存块的先后顺序。
+- `pageFaultCount`：当前累计缺页次数。
+
+初始状态由 `createInitialSimulationState()` 创建：
+
+```ts
+memoryFrames: [
+  { frameNumber: 0, pageNumber: null },
+  { frameNumber: 1, pageNumber: null },
+  { frameNumber: 2, pageNumber: null },
+  { frameNumber: 3, pageNumber: null }
+]
+```
+
+这里的 `pageNumber: null` 表示这个内存块暂时没有装入任何页面。
+
+### 单步执行逻辑
+
+单步执行函数是：
+
+```ts
+export function executeFifoStep(
+    state: SimulationState,
+    instruction: InstructionAccess,
+): SimulationStep
+```
+
+它的流程是：
+
+1. 根据指令号计算页号。
+2. 根据指令号计算页内偏移。
+3. 检查这个页号是否已经在内存块中。
+4. 如果已经在内存中，就是命中，不增加缺页次数。
+5. 如果不在内存中，就是缺页，缺页次数加 1。
+6. 缺页时，如果还有空闲内存块，就直接装入。
+7. 缺页时，如果内存块已满，就按 FIFO 队列替换最早进入的内存块。
+8. 根据内存块号和页内偏移计算物理地址。
+9. 返回本步骤的执行结果和内存快照。
+
+### 单步结果
+
+每一步模拟结果包含：
+
+```ts
+export interface SimulationStep {
+    step: number;
+    instruction: InstructionAccess;
+    pageNumber: PageNumber;
+    pageOffset: PageOffset;
+    memoryFrameNumber: MemoryFrameNumber;
+    physicalAddress: PhysicalAddress;
+    isPageFault: boolean;
+    pageFaultCount: number;
+    memoryFrames: MemoryFrameSnapshot[];
+}
+```
+
+其中：
+
+- `pageNumber`：当前指令对应的页号。
+- `pageOffset`：当前指令在页内的偏移。
+- `memoryFrameNumber`：当前页所在的内存块号。
+- `physicalAddress`：当前指令对应的物理地址。
+- `isPageFault`：本次访问是否发生缺页。
+- `pageFaultCount`：执行到当前步骤时的累计缺页次数。
+- `memoryFrames`：执行完当前步骤后的内存块快照。
+
+### FIFO 骨架
+
+当前阶段的 FIFO 已经能完成基础置换：
+
+- 内存未满时，页面直接装入第一个空闲内存块。
+- 内存已满时，替换 FIFO 队列中最早进入的内存块。
+
+第 6 阶段还会继续完善 FIFO 的置换信息，例如显式记录“被换出的页号”“被装入的页号”“替换发生在哪个内存块”。
+
+### 模拟接口
+
+新增接口：
+
+```bash
+curl 'http://localhost:3000/api/simulations?algorithm=fifo&seed=1'
+```
+
+返回结果包含：
+
+- `algorithm`：当前使用的算法，现阶段是 `fifo`。
+- `seed`：生成访问序列使用的 seed。
+- `pageFaultCount`：总缺页次数。
+- `steps`：320 步完整模拟结果。
+
+本阶段验证时，`seed=1` 的结果包含 320 步，缺页次数为 `146`。
+
+后端日志会输出：
+
+```text
+[GET /api/simulations] algorithm=fifo seed=1 steps=320 pageFaults=146
+```
+
+### 本阶段测试
+
+本阶段新增了 `tests/simulator.test.ts`，覆盖了：
+
+- 初始内存为空，缺页次数为 0。
+- 首次访问某页一定缺页。
+- 重复访问已在内存中的同一页不会缺页。
+- 自定义短序列可以跑出预期缺页次数。
+- 使用 seed 生成的完整访问序列可以跑出 320 步模拟结果。
+
+当前 `npm test` 已通过，说明基础模拟流程已经跑通。

@@ -2,6 +2,8 @@ import express, { type Express } from "express";
 
 import { COURSE_CONFIG } from "./config/constants.js";
 import { generateInstructionSequence, parseSeed } from "./core/instructions.js";
+import { runSimulation } from "./core/simulator.js";
+import type { ReplacementAlgorithm } from "./types/simulation.js";
 
 /**
  * 创建 Express 应用，并注册当前已有的 API 路由。
@@ -45,6 +47,29 @@ export function createApp(): Express {
         } catch (error) {
             response.status(400).json({
                 message: error instanceof Error ? error.message : "seed 参数非法",
+            });
+        }
+    });
+
+    app.get("/api/simulations", (request, response) => {
+        try {
+            const algorithm = request.query.algorithm;
+
+            if (algorithm !== "fifo") {
+                throw new RangeError("当前阶段只支持 fifo 算法");
+            }
+
+            const seed = parseSeed(request.query.seed);
+            const result = runSimulation(algorithm as ReplacementAlgorithm, seed);
+
+            console.log(
+                `[GET /api/simulations] algorithm=${algorithm} seed=${seed} steps=${result.steps.length} pageFaults=${result.pageFaultCount}`,
+            );
+
+            response.json(result);
+        } catch (error) {
+            response.status(400).json({
+                message: error instanceof Error ? error.message : "模拟参数非法",
             });
         }
     });
