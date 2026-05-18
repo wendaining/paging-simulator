@@ -9,6 +9,8 @@
 - `npm start`：运行编译后的 `dist/server.js`。
 - `npm test`：使用 Vitest 执行自动测试。
 
+> 这里为什么只有 `npm start` 和 `npm test` 不需要加 `run`？是因为这是 npm 的历史遗留问题，其实加了 `run` 也行，但是只有这几个可以不加。
+
 `tsconfig.json` 是 TypeScript 编译配置。当前只把 `src/**/*.ts` 放进生产编译范围，测试文件由 Vitest 直接处理，不放进 `dist/`。这样可以避免把测试代码编译进正式运行产物。
 
 `src/app.ts` 负责创建 Express app。这里把 app 创建逻辑单独放进 `createApp()`，好处是测试可以直接导入 app，不需要真的监听端口。
@@ -156,3 +158,107 @@ console.log(`paging-simulator server is running on http://localhost:${port}`);
 src/app.ts      创建 Express 应用，注册接口
 src/server.ts   调用 createApp，并启动端口监听
 ```
+
+## 第二阶段：实现课程配置 API
+
+本阶段把课程文档中的固定配置写进了代码，并提供了 `GET /api/config` 接口。
+
+### 课程固定常量
+
+固定配置放在 `src/config/constants.ts`：
+
+```ts
+export const DEFAULT_PORT = 3000;
+
+export const TOTAL_INSTRUCTIONS = 320;
+
+export const INSTRUCTIONS_PER_PAGE = 10;
+
+export const TOTAL_PAGES = 32;
+
+export const MEMORY_FRAME_COUNT = 4;
+```
+
+这些值来自课程要求：
+
+- 作业共有 320 条指令。
+- 每个页面存放 10 条指令。
+- 地址空间一共有 32 页。
+- 主存最多同时放 4 个页面。
+
+把这些值定义成常量的好处是：后续地址转换、访问序列生成、页面置换算法都可以复用同一份配置，避免在多个文件里重复写 `320`、`10`、`32`、`4` 这些数字。
+
+### `export` 是什么
+
+`export` 表示“把这个变量提供给其他文件使用”。例如：
+
+```ts
+export const TOTAL_INSTRUCTIONS = 320;
+```
+
+这样其他文件就可以通过 `import` 导入它：
+
+```ts
+import { TOTAL_INSTRUCTIONS } from "./config/constants.js";
+```
+
+如果没有 `export`，这个常量就只能在当前文件内部使用。
+
+### `COURSE_CONFIG`
+
+代码里还定义了一个对象：
+
+```ts
+export const COURSE_CONFIG = {
+    totalInstructions: TOTAL_INSTRUCTIONS,
+    instructionsPerPage: INSTRUCTIONS_PER_PAGE,
+    totalPages: TOTAL_PAGES,
+    memoryFrameCount: MEMORY_FRAME_COUNT,
+} as const;
+```
+
+这个对象把几个分散的常量组合成一个整体，方便 API 一次性返回给前端或 curl。
+
+`as const` 是 TypeScript 语法，表示这个对象里的值是固定的，不希望后续代码随便修改它。
+
+### `/api/config` 接口
+
+在 `src/app.ts` 中新增了：
+
+```ts
+app.get("/api/config", (_request, response) => {
+    console.log("[GET /api/config] 返回课程固定配置");
+
+    response.json(COURSE_CONFIG);
+});
+```
+
+这段代码的意思是：
+
+1. 当收到 `GET /api/config` 请求时，执行后面的函数。
+2. 先用 `console.log` 打印一条日志，方便运行后端时观察请求是否进入接口。
+3. 用 `response.json(COURSE_CONFIG)` 把课程配置以 JSON 格式返回。
+
+用 curl 验证：
+
+```bash
+curl http://localhost:3000/api/config
+```
+
+返回结果：
+
+```json
+{"totalInstructions":320,"instructionsPerPage":10,"totalPages":32,"memoryFrameCount":4}
+```
+
+后端日志会打印：
+
+```text
+[GET /api/config] 返回课程固定配置
+```
+
+### 本阶段测试
+
+本阶段用 Vitest 测试了 `COURSE_CONFIG` 的值，确认它和课程要求一致。
+
+当前测试没有在测试进程里启动真实端口，因为当前运行环境不允许测试进程临时监听端口。真实 HTTP 接口已经通过 `npm run dev` 加 curl 的方式验证。

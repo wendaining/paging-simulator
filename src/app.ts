@@ -1,5 +1,7 @@
 import express, { type Express } from "express";
 
+import { COURSE_CONFIG } from "./config/constants.js";
+
 /**
  * 创建 Express 应用，并注册当前已有的 API 路由。
  *
@@ -18,6 +20,11 @@ export function createApp(): Express {
             status: "ok",
             service: "paging-simulator",
         });
+    });
+
+    app.get("/api/config", (_request, response) => {
+        console.log("[GET /api/config] 返回课程固定配置");
+        response.json(COURSE_CONFIG);
     });
 
     return app;
