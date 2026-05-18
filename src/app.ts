@@ -55,8 +55,8 @@ export function createApp(): Express {
         try {
             const algorithm = request.query.algorithm;
 
-            if (algorithm !== "fifo" && algorithm !== "lru") {
-                throw new RangeError("当前阶段只支持 fifo 和 lru 算法");
+            if (algorithm !== "fifo" && algorithm !== "lru" && algorithm !== "clock") {
+                throw new RangeError("当前阶段只支持 fifo、lru 和 clock 算法");
             }
 
             const seed = parseSeed(request.query.seed);

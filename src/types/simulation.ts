@@ -6,7 +6,7 @@ import type {
 } from "./address.js";
 import type { InstructionAccess } from "./instruction.js";
 
-export type ReplacementAlgorithm = "fifo" | "lru";
+export type ReplacementAlgorithm = "fifo" | "lru" | "clock";
 
 export interface MemoryFrameSnapshot {
     frameNumber: MemoryFrameNumber;

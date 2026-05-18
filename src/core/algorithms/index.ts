@@ -1,5 +1,6 @@
 import { FIFO_ALGORITHM } from "./fifo.js";
 import { LRU_ALGORITHM } from "./lru.js";
+import { CLOCK_ALGORITHM } from "./clock.js";
 import type {
     PageReplacementAlgorithm,
     ReplacementAlgorithm,
@@ -8,6 +9,7 @@ import type {
 const ALGORITHMS: Record<ReplacementAlgorithm, PageReplacementAlgorithm> = {
     fifo: FIFO_ALGORITHM,
     lru: LRU_ALGORITHM,
+    clock: CLOCK_ALGORITHM,
 };
 
 /**

@@ -946,3 +946,104 @@ curl -s -o /tmp/paging-lru.json -w '%{http_code} %{size_download}\n' 'http://loc
 - 同一 seed 下 LRU 和 FIFO 可以产生不同缺页次数。
 
 同时扩展了模拟器测试，确认 LRU 单步访问也能返回和 FIFO 一致的结果结构。
+
+## 第 8 阶段：CLOCK 页面置换算法
+
+本阶段实现了 CLOCK 页面置换算法，并让模拟接口支持：
+
+```bash
+curl 'http://localhost:3000/api/simulations?algorithm=clock&seed=1'
+```
+
+### CLOCK 的核心状态
+
+CLOCK 仍然复用统一的模拟器流程，算法自己的状态放在 `src/core/algorithms/clock.ts`：
+
+```ts
+interface ClockState {
+    hand: MemoryFrameNumber;
+    referenceBits: number[];
+}
+```
+
+- `hand`：CLOCK 指针，指向下一次扫描开始的内存块。
+- `referenceBits`：访问位数组，每个内存块对应一个访问位。
+
+访问位不是页本身的数据，而是算法用来判断“这个内存块里的页面最近是否被访问过”的标记。
+
+### 命中时如何处理
+
+如果访问的页面已经在内存中，模拟器会调用算法接口的 `handlePageHit`。
+
+CLOCK 的命中处理是：
+
+```ts
+export function markClockFrameAsReferenced(
+    state: SimulationState,
+    frameNumber: MemoryFrameNumber,
+): void
+```
+
+它会把对应内存块的访问位置为 `1`，表示这个页面最近被访问过。
+
+### 缺页时如何扫描
+
+缺页时分两种情况：
+
+1. 如果还有空闲内存块，直接把页面装入空闲块，把访问位置为 `1`，然后把指针移动到下一个内存块。
+2. 如果内存已满，就从 `hand` 指向的内存块开始扫描。
+
+扫描规则是：
+
+- 如果当前内存块访问位是 `1`，说明它最近被访问过，先把访问位置为 `0`，然后指针继续向后走。
+- 如果当前内存块访问位是 `0`，说明它最近没有再次获得访问机会，直接替换这个内存块里的页面。
+- 替换完成后，新装入页面的访问位置为 `1`，指针推进到下一个内存块。
+
+这就是“第二次机会”的含义：访问位为 `1` 的页面不会立刻被换出，而是先清零并跳过一次。
+
+### 为什么 CLOCK 近似 LRU
+
+LRU 要准确维护“最近使用顺序”，每次命中都要更新队列顺序。CLOCK 不保存完整顺序，只保存一个访问位。
+
+因此 CLOCK 只能判断一个页面“最近有没有被访问过”，不能精确判断它到底比其他页面新多少。指针扫描时，访问位为 `1` 的页面会获得一次保留机会；访问位已经是 `0` 的页面，会被认为相对更久没有使用。
+
+所以 CLOCK 的效果接近 LRU：它倾向于保留最近访问过的页面，替换一段时间没有再次被访问的页面。但它不是严格 LRU，因为它不维护精确的最近使用排序。
+
+### curl 验证
+
+本阶段验证 CLOCK 接口时，把完整响应写入 `/tmp/paging-clock.json`，再读取关键字段：
+
+```bash
+curl -s -o /tmp/paging-clock.json -w '%{http_code} %{size_download}\n' 'http://localhost:3000/api/simulations?algorithm=clock&seed=1'
+```
+
+关键结果：
+
+```json
+{
+  "algorithm": "clock",
+  "seed": 1,
+  "steps": 320,
+  "pageFaultCount": 147,
+  "firstReplacement": {
+    "frameNumber": 0,
+    "loadedPageNumber": 13,
+    "evictedPageNumber": 7
+  }
+}
+```
+
+后端日志也会输出：
+
+```text
+[GET /api/simulations] algorithm=clock seed=1 steps=320 pageFaults=147
+```
+
+### 本阶段测试
+
+本阶段新增了 `tests/clock.test.ts`，覆盖了：
+
+- 命中页面时会把访问位置为 `1`。
+- 指针扫描时会跳过访问位为 `1` 的页面，并把它们清为 `0`。
+- 替换页面后，CLOCK 指针会推进到下一个内存块。
+- `runSimulation("clock", 1)` 可以生成完整的 320 步模拟结果。
