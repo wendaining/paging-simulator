@@ -12,18 +12,18 @@
 
 ## 1. 建立最小可运行后端
 
-- [ ] 先检查本机的环境
-- [ ] 初始化 Node.js + TypeScript 项目。
-- [ ] 安装 Express、TypeScript、后端开发启动工具和 Vitest。
-- [ ] 建立 `src/server.ts`，负责启动 Express 服务。
-- [ ] 建立 `src/app.ts`，负责创建 Express app。
-- [ ] 建立 `src/config/constants.ts`，预留课程固定常量位置。
-- [ ] 实现 `GET /health`，返回服务状态。
-- [ ] 配置 `npm run dev`，确保能启动后端服务。
-- [ ] 配置 `npm test`，确保能执行最小测试。
-- [ ] 使用 curl 验证 `GET /health`。
-- [ ] 将 `package.json`、TypeScript、Express app 和 server 的关系解释追加写入 `docs/learn.md`。
-- [ ] 完成后勾选本阶段已完成任务。
+- [x] 先检查本机的环境
+- [x] 初始化 Node.js + TypeScript 项目。
+- [x] 安装 Express、TypeScript、后端开发启动工具和 Vitest。
+- [x] 建立 `src/server.ts`，负责启动 Express 服务。
+- [x] 建立 `src/app.ts`，负责创建 Express app。
+- [x] 建立 `src/config/constants.ts`，预留课程固定常量位置。
+- [x] 实现 `GET /health`，返回服务状态。
+- [x] 配置 `npm run dev`，确保能启动后端服务。
+- [x] 配置 `npm test`，确保能执行最小测试。
+- [x] 使用 curl 验证 `GET /health`。
+- [x] 将 `package.json`、TypeScript、Express app 和 server 的关系解释追加写入 `docs/learn.md`。
+- [x] 完成后勾选本阶段已完成任务。
 
 ## 2. 实现课程配置 API
 
