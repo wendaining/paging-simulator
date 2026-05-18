@@ -1,0 +1,1 @@
+本项目采用前端 Vue + Element Plus，后端 Typescript + Node.js，最后用 Electron 打包成客户端的形式开发。
