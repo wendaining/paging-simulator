@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 
 import { COURSE_CONFIG } from "./config/constants.js";
+import { generateInstructionSequence, parseSeed } from "./core/instructions.js";
 
 /**
  * 创建 Express 应用，并注册当前已有的 API 路由。
@@ -25,6 +26,27 @@ export function createApp(): Express {
     app.get("/api/config", (_request, response) => {
         console.log("[GET /api/config] 返回课程固定配置");
         response.json(COURSE_CONFIG);
+    });
+
+    app.get("/api/instructions", (request, response) => {
+        try {
+            const seed = parseSeed(request.query.seed);
+            const instructions = generateInstructionSequence(seed);
+
+            console.log(
+                `[GET /api/instructions] seed=${seed} length=${instructions.length} preview=${JSON.stringify(instructions.slice(0, 5))}`,
+            );
+
+            response.json({
+                seed,
+                length: instructions.length,
+                instructions,
+            });
+        } catch (error) {
+            response.status(400).json({
+                message: error instanceof Error ? error.message : "seed 参数非法",
+            });
+        }
     });
 
     return app;

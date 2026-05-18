@@ -372,3 +372,147 @@ export function getPhysicalAddress(
 - 非法输入，例如 `-1`、`320`、非整数、非法内存块号、非法页内偏移。
 
 当前 `npm test` 已通过，说明地址转换逻辑符合课程设定。
+
+## 第四阶段：实现访问序列生成 API
+
+本阶段实现了课程要求中的指令访问序列生成，并提供了 `GET /api/instructions` 接口。
+
+### 访问记录的数据结构
+
+访问序列中的每一项长这样：
+
+```ts
+export interface InstructionAccess {
+    step: number;
+    instructionNumber: InstructionNumber;
+    source: InstructionSource;
+}
+```
+
+字段含义：
+
+- `step`：第几步执行，从 `1` 开始。
+- `instructionNumber`：本次访问的指令号，范围是 `0..319`。
+- `source`：这条指令的来源类型。
+
+`source` 当前有四种：
+
+```ts
+export type InstructionSource = "start" | "sequential" | "frontJump" | "backJump";
+```
+
+- `start`：随机起始指令。
+- `sequential`：顺序执行的下一条指令。
+- `frontJump`：跳转到前地址部分的指令。
+- `backJump`：跳转到后地址部分的指令。
+
+### 为什么要用 seed
+
+普通随机数每次运行结果都可能不同，不方便测试。比如今天生成的序列和明天生成的序列不一样，就很难判断是代码改坏了，还是随机数本来就不同。
+
+所以本项目支持 `seed`。同一个 seed 会生成同一条访问序列，例如：
+
+```bash
+curl 'http://localhost:3000/api/instructions?seed=1'
+```
+
+只要 seed 还是 `1`，生成结果就稳定，方便调试、写测试和对比算法结果。
+
+### 伪随机数生成器
+
+代码里没有直接使用 `Math.random()`，而是在 `src/core/random.ts` 中实现了一个简单的线性同余随机数生成器：
+
+```ts
+state = (state * LCG_MULTIPLIER + LCG_INCREMENT) % LCG_MODULUS;
+```
+
+这个公式会根据上一次的 `state` 算出下一次的 `state`。只要初始 seed 相同，后续生成出来的随机数序列就相同。
+
+这类随机数叫“伪随机数”：看起来像随机，但其实是可复现的计算结果。
+
+### 访问序列生成规则
+
+核心函数是：
+
+```ts
+export function generateInstructionSequence(seed = DEFAULT_SEED): InstructionAccess[]
+```
+
+它会生成 320 条访问记录，大体过程是：
+
+1. 先随机选择一个起始指令，标记为 `start`。
+2. 顺序执行下一条指令，标记为 `sequential`。
+3. 跳转到当前指令前面的地址部分，标记为 `frontJump`。
+4. 再顺序执行下一条，标记为 `sequential`。
+5. 跳转到后地址部分，标记为 `backJump`。
+6. 再顺序执行下一条，标记为 `sequential`。
+7. 重复这个过程，直到生成 320 条访问记录。
+
+实现时还处理了边界情况，保证所有指令号都在 `0..319` 范围内，不会出现负数或超过 `319` 的指令号。
+
+### `/api/instructions` 接口
+
+在 `src/app.ts` 中新增了：
+
+```ts
+app.get("/api/instructions", (request, response) => {
+    // ...
+});
+```
+
+它会读取查询参数里的 `seed`：
+
+```ts
+const seed = parseSeed(request.query.seed);
+```
+
+然后生成访问序列：
+
+```ts
+const instructions = generateInstructionSequence(seed);
+```
+
+最后返回 JSON：
+
+```json
+{
+  "seed": 1,
+  "length": 320,
+  "instructions": []
+}
+```
+
+这里的 `instructions` 实际会包含 320 条访问记录。
+
+### curl 验证
+
+因为 URL 里有 `?`，在 zsh 中需要给 URL 加引号，否则 shell 可能会把 `?` 当作通配符：
+
+```bash
+curl 'http://localhost:3000/api/instructions?seed=1'
+```
+
+本阶段验证时返回了：
+
+- `seed` 为 `1`。
+- `length` 为 `320`。
+- `instructions` 中包含 320 条访问记录。
+
+后端日志会输出 seed、序列长度和前几条记录预览，例如：
+
+```text
+[GET /api/instructions] seed=1 length=320 preview=[...]
+```
+
+### 本阶段测试
+
+本阶段新增了 `tests/instructions.test.ts`，覆盖了：
+
+- 访问序列长度必须是 `320`。
+- 所有指令号都必须在 `0..319`。
+- 同一个 seed 生成的序列必须完全一致。
+- `step` 从 `1` 到 `320`。
+- 来源类型包含 `sequential`、`frontJump`、`backJump`。
+- 非法 seed 会抛出错误。
+
+当前 `npm test` 已通过，说明访问序列生成逻辑满足本阶段要求。
