@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     createInitialSimulationState,
     executeFifoStep,
+    executeLruStep,
     runSimulation,
     simulateFifoInstructions,
 } from "../src/core/simulator.js";
@@ -19,6 +20,8 @@ describe("createInitialSimulationState", () => {
             { frameNumber: 2, pageNumber: null },
             { frameNumber: 3, pageNumber: null },
         ]);
+        expect(state.fifoQueue).toEqual([]);
+        expect(state.lruQueue).toEqual([]);
     });
 });
 
@@ -66,6 +69,26 @@ describe("executeFifoStep", () => {
         expect(repeatedAccess.physicalAddress).toBe(6);
         expect(repeatedAccess.replacement).toBeNull();
         expect(repeatedAccess.pageFaultCount).toBe(1);
+    });
+});
+
+describe("executeLruStep", () => {
+    it("marks the first access to a page as a page fault", () => {
+        const state = createInitialSimulationState();
+        const result = executeLruStep(state, {
+            step: 1,
+            instructionNumber: 25,
+            source: "start",
+        });
+
+        expect(result.isPageFault).toBe(true);
+        expect(result.pageNumber).toBe(2);
+        expect(result.memoryFrameNumber).toBe(0);
+        expect(result.replacement).toEqual({
+            frameNumber: 0,
+            loadedPageNumber: 2,
+            evictedPageNumber: null,
+        });
     });
 });
 

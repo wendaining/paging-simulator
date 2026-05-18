@@ -6,7 +6,7 @@ import type {
 } from "./address.js";
 import type { InstructionAccess } from "./instruction.js";
 
-export type ReplacementAlgorithm = "fifo";
+export type ReplacementAlgorithm = "fifo" | "lru";
 
 export interface MemoryFrameSnapshot {
     frameNumber: MemoryFrameNumber;
@@ -16,6 +16,7 @@ export interface MemoryFrameSnapshot {
 export interface SimulationState {
     memoryFrames: MemoryFrameSnapshot[];
     fifoQueue: MemoryFrameNumber[];
+    lruQueue: MemoryFrameNumber[];
     pageFaultCount: number;
 }
 

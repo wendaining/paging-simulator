@@ -797,3 +797,152 @@ curl -s -o /tmp/paging-simulation.json -w '%{http_code} %{size_download}\n' 'htt
 - 验证完整模拟仍然能生成 320 步。
 
 当前 `npm test` 已通过，说明 FIFO 页面置换行为符合当前阶段要求。
+
+## 第七阶段：实现 LRU 页面置换
+
+本阶段实现了 LRU 页面置换算法，并让模拟接口支持：
+
+```bash
+curl 'http://localhost:3000/api/simulations?algorithm=lru&seed=1'
+```
+
+### LRU 的核心思想
+
+LRU 是 Least Recently Used，意思是“最近最少使用”。
+
+在页面置换里，它的规则是：
+
+```text
+当内存已满并发生缺页时，换出最久没有被访问过的页面。
+```
+
+这和 FIFO 不同：
+
+- FIFO 只关心页面进入内存的时间。
+- LRU 关心页面最近一次被访问的时间。
+
+### LRU 队列
+
+本项目在模拟器状态中新增了：
+
+```ts
+lruQueue: MemoryFrameNumber[]
+```
+
+它保存内存块的最近使用顺序：
+
+- 队头：最久未使用的内存块。
+- 队尾：最近使用过的内存块。
+
+例如：
+
+```text
+lruQueue = [1, 2, 3, 0]
+```
+
+表示内存块 `1` 最久没有被访问，内存块 `0` 最近刚被访问。
+
+### 命中时为什么要更新顺序
+
+LRU 和 FIFO 最大的区别在“命中”时。
+
+如果访问的页面已经在内存中：
+
+- FIFO 不改变队列。
+- LRU 要把这个页面所在的内存块移动到队尾。
+
+代码中对应函数是：
+
+```ts
+export function markLruFrameAsUsed(
+    state: SimulationState,
+    frameNumber: MemoryFrameNumber,
+): void
+```
+
+它会先从 `lruQueue` 中移除这个内存块号，再把它放到队尾。
+
+### 缺页时如何替换
+
+LRU 缺页处理在 `src/core/algorithms/lru.ts` 中：
+
+```ts
+export function handleLruPageFault(
+    state: SimulationState,
+    pageNumber: PageNumber,
+): PageReplacement
+```
+
+处理规则：
+
+1. 缺页次数加 1。
+2. 如果还有空闲内存块，就直接装入页面，并把这个内存块标记为最近使用。
+3. 如果内存已满，就从 `lruQueue` 队头取出最久未使用的内存块。
+4. 换出该内存块里的旧页面。
+5. 装入新页面。
+6. 把该内存块移动到 `lruQueue` 队尾。
+
+### 返回结构保持一致
+
+LRU 和 FIFO 使用相同的单步返回结构，所以前端之后展示时不用为不同算法做两套表格。
+
+例如一次真实置换仍然会返回：
+
+```json
+{
+  "frameNumber": 1,
+  "loadedPageNumber": 4,
+  "evictedPageNumber": 1
+}
+```
+
+含义是：在内存块 `1` 中，换出页面 `1`，装入页面 `4`。
+
+### 和 FIFO 的结果差异
+
+本阶段用同一个访问序列 `seed=1` 验证：
+
+- FIFO 缺页次数是 `146`。
+- LRU 缺页次数是 `145`。
+
+这说明两个算法确实走了不同的置换路径。
+
+### curl 验证
+
+本阶段验证 LRU 接口时，把完整响应写入 `/tmp/paging-lru.json`，再读取关键字段：
+
+```bash
+curl -s -o /tmp/paging-lru.json -w '%{http_code} %{size_download}\n' 'http://localhost:3000/api/simulations?algorithm=lru&seed=1'
+```
+
+关键结果：
+
+```json
+{
+  "algorithm": "lru",
+  "seed": 1,
+  "steps": 320,
+  "pageFaultCount": 145,
+  "firstReplacement": {
+    "frameNumber": 0,
+    "loadedPageNumber": 13,
+    "evictedPageNumber": 7
+  }
+}
+```
+
+后端日志也会输出：
+
+```text
+[GET /api/simulations] algorithm=lru seed=1 steps=320 pageFaults=145
+```
+
+### 本阶段测试
+
+本阶段新增了 `tests/lru.test.ts`，覆盖了：
+
+- 命中页面时会更新最近使用顺序。
+- 缺页且内存满时会替换最久未使用页面。
+- 同一 seed 下 LRU 和 FIFO 可以产生不同缺页次数。
+
+同时扩展了模拟器测试，确认 LRU 单步访问也能返回和 FIFO 一致的结果结构。
