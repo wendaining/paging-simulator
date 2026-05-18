@@ -1370,3 +1370,134 @@ curl 'http://127.0.0.1:5173/api/simulations?algorithm=clock&seed=1'
 ```
 
 这说明默认随机 seed 和指定 seed 两种模式都能正常工作。
+
+## 第 12 阶段：Electron 打包
+
+本阶段引入了 Electron，并添加了客户端打包流程。
+
+### 新增文件
+
+Electron 主进程入口是：
+
+```text
+electron/main.ts
+```
+
+Electron 专用 TypeScript 配置是：
+
+```text
+tsconfig.electron.json
+```
+
+编译后主进程输出到：
+
+```text
+dist-electron/electron/main.js
+```
+
+因此 `package.json` 中的 `main` 字段指向：
+
+```json
+"main": "dist-electron/electron/main.js"
+```
+
+### Electron 中如何启动后端
+
+Electron 主进程没有直接打开 `dist-web/index.html` 文件，而是在主进程里启动了一个内置 Express 服务。
+
+流程是：
+
+1. 主进程调用后端已有的 `createApp()`，复用现有 API。
+2. 继续用 Express 托管 `dist-web` 里的前端构建产物。
+3. 服务监听 `127.0.0.1` 的随机空闲端口。
+4. Electron 窗口加载这个本地服务地址。
+
+这样做的好处是：前端代码里的 `/api/config` 和 `/api/simulations` 不需要为 Electron 单独改写。浏览器开发模式、Vite 代理模式、Electron 客户端模式都可以继续使用同一套 API 路径。
+
+### 新增命令
+
+构建 Electron 主进程：
+
+```bash
+npm run build:electron
+```
+
+开发式启动 Electron：
+
+```bash
+npm run electron:dev
+```
+
+生成 Linux 解包目录：
+
+```bash
+npm run electron:pack
+```
+
+生成正式安装包：
+
+```bash
+npm run electron:dist
+```
+
+其中 `electron:pack` 和 `electron:dist` 都会先执行：
+
+```bash
+npm run build
+npm run build:web
+npm run build:electron
+```
+
+再交给 `electron-builder` 打包。
+
+### 打包产物
+
+本阶段已经成功执行：
+
+```bash
+npm run electron:pack
+```
+
+生成的客户端目录是：
+
+```text
+release/linux-unpacked
+```
+
+主要产物包括：
+
+```text
+release/linux-unpacked/paging-simulator
+release/linux-unpacked/resources/app.asar
+```
+
+`app.asar` 中已经包含：
+
+- `dist-web`：前端构建产物。
+- `dist-electron`：Electron 主进程和它复用的后端模块。
+- `dist`：普通后端构建产物。
+
+这说明客户端包内已经具备前端页面、后端 API 和 Electron 主进程。
+
+### 验证情况
+
+已通过的验证：
+
+- `npm test`：后端测试全部通过。
+- `npm run build`：后端 TypeScript 构建通过。
+- `npm run build:web`：前端构建通过。
+- `npm run build:electron`：Electron 主进程构建通过。
+- `npm run electron:pack`：Electron 目录打包通过。
+- `app.asar` 内容检查确认包含前端、后端和 Electron 主进程。
+
+当前环境不能完成真实窗口打开验证，因为 WSL/沙箱中没有可用的 X server 或 `$DISPLAY`。直接运行客户端会报：
+
+```text
+Missing X server or $DISPLAY
+```
+
+这属于运行环境限制，不是打包产物缺少文件。要验证窗口真正打开，需要在有图形桌面的 Linux 环境、Windows 桌面环境，或配置了 X server 的 WSL 环境中运行：
+
+```bash
+release/linux-unpacked/paging-simulator
+```
