@@ -1,12 +1,12 @@
 import { MEMORY_FRAME_COUNT } from "../config/constants.js";
-import { handleFifoPageFault } from "./algorithms/fifo.js";
-import { handleLruPageFault, markLruFrameAsUsed } from "./algorithms/lru.js";
+import { getReplacementAlgorithm } from "./algorithms/index.js";
 import { getPageNumber, getPageOffset, getPhysicalAddress } from "./address.js";
 import { generateInstructionSequence } from "./instructions.js";
 import type { MemoryFrameNumber, PageNumber } from "../types/address.js";
 import type { InstructionAccess } from "../types/instruction.js";
 import type {
     MemoryFrameSnapshot,
+    PageReplacementAlgorithm,
     ReplacementAlgorithm,
     SimulationResult,
     SimulationState,
@@ -16,16 +16,18 @@ import type {
 /**
  * 创建模拟器初始状态。
  *
+ * @param algorithm 页面置换算法实现。
  * @returns 内存为空、缺页次数为 0 的模拟器状态。
  */
-export function createInitialSimulationState(): SimulationState {
+export function createInitialSimulationState(
+    algorithm: PageReplacementAlgorithm = getReplacementAlgorithm("fifo"),
+): SimulationState {
     return {
         memoryFrames: Array.from({ length: MEMORY_FRAME_COUNT }, (_, index) => ({
             frameNumber: index,
             pageNumber: null,
         })),
-        fifoQueue: [],
-        lruQueue: [],
+        algorithmState: algorithm.createInitialState(),
         pageFaultCount: 0,
     };
 }
@@ -57,59 +59,23 @@ function findFrameByPage(
 }
 
 /**
- * 执行单条指令访问，并更新模拟器状态。
+ * 执行单条指令访问，并通过指定算法更新模拟器状态。
  *
  * @param state 当前模拟器状态。
  * @param instruction 本次访问的指令记录。
+ * @param algorithm 页面置换算法实现。
  * @returns 本次访问的执行结果。
  */
-export function executeFifoStep(
+export function executeSimulationStep(
     state: SimulationState,
     instruction: InstructionAccess,
+    algorithm: PageReplacementAlgorithm,
 ): SimulationStep {
     const pageNumber = getPageNumber(instruction.instructionNumber);
     const pageOffset = getPageOffset(instruction.instructionNumber);
     const existingFrame = findFrameByPage(state.memoryFrames, pageNumber);
     const isPageFault = existingFrame === null;
-    const replacement = isPageFault ? handleFifoPageFault(state, pageNumber) : null;
-    const memoryFrameNumber = replacement?.frameNumber ?? existingFrame;
-
-    if (memoryFrameNumber === null) {
-        throw new Error("页面命中时未找到对应内存块");
-    }
-
-    const physicalAddress = getPhysicalAddress(memoryFrameNumber, pageOffset);
-
-    return {
-        step: instruction.step,
-        instruction,
-        pageNumber,
-        pageOffset,
-        memoryFrameNumber,
-        physicalAddress,
-        isPageFault,
-        replacement,
-        pageFaultCount: state.pageFaultCount,
-        memoryFrames: cloneMemoryFrames(state.memoryFrames),
-    };
-}
-
-/**
- * 执行单条指令访问，并按 LRU 更新模拟器状态。
- *
- * @param state 当前模拟器状态。
- * @param instruction 本次访问的指令记录。
- * @returns 本次访问的执行结果。
- */
-export function executeLruStep(
-    state: SimulationState,
-    instruction: InstructionAccess,
-): SimulationStep {
-    const pageNumber = getPageNumber(instruction.instructionNumber);
-    const pageOffset = getPageOffset(instruction.instructionNumber);
-    const existingFrame = findFrameByPage(state.memoryFrames, pageNumber);
-    const isPageFault = existingFrame === null;
-    const replacement = isPageFault ? handleLruPageFault(state, pageNumber) : null;
+    const replacement = isPageFault ? algorithm.handlePageFault(state, pageNumber) : null;
     const memoryFrameNumber = replacement?.frameNumber ?? existingFrame;
 
     if (memoryFrameNumber === null) {
@@ -117,7 +83,7 @@ export function executeLruStep(
     }
 
     if (!isPageFault) {
-        markLruFrameAsUsed(state, memoryFrameNumber);
+        algorithm.handlePageHit(state, memoryFrameNumber);
     }
 
     const physicalAddress = getPhysicalAddress(memoryFrameNumber, pageOffset);
@@ -137,40 +103,26 @@ export function executeLruStep(
 }
 
 /**
- * 按 FIFO 骨架执行完整访问序列。
+ * 按指定页面置换算法执行完整访问序列。
  *
  * @param instructions 需要执行的指令访问序列。
+ * @param algorithm 页面置换算法实现。
  * @returns 完整模拟结果。
  */
-export function simulateFifoInstructions(instructions: InstructionAccess[]): Omit<
+export function simulateInstructions(
+    instructions: InstructionAccess[],
+    algorithm: PageReplacementAlgorithm,
+): Omit<
     SimulationResult,
     "seed"
 > {
-    const state = createInitialSimulationState();
-    const steps = instructions.map((instruction) => executeFifoStep(state, instruction));
+    const state = createInitialSimulationState(algorithm);
+    const steps = instructions.map((instruction) =>
+        executeSimulationStep(state, instruction, algorithm),
+    );
 
     return {
-        algorithm: "fifo",
-        pageFaultCount: state.pageFaultCount,
-        steps,
-    };
-}
-
-/**
- * 按 LRU 算法执行完整访问序列。
- *
- * @param instructions 需要执行的指令访问序列。
- * @returns 完整模拟结果。
- */
-export function simulateLruInstructions(instructions: InstructionAccess[]): Omit<
-    SimulationResult,
-    "seed"
-> {
-    const state = createInitialSimulationState();
-    const steps = instructions.map((instruction) => executeLruStep(state, instruction));
-
-    return {
-        algorithm: "lru",
+        algorithm: algorithm.name,
         pageFaultCount: state.pageFaultCount,
         steps,
     };
@@ -188,10 +140,7 @@ export function runSimulation(
     seed: number,
 ): SimulationResult {
     const instructions = generateInstructionSequence(seed);
-    const result =
-        algorithm === "fifo"
-            ? simulateFifoInstructions(instructions)
-            : simulateLruInstructions(instructions);
+    const result = simulateInstructions(instructions, getReplacementAlgorithm(algorithm));
 
     return {
         ...result,

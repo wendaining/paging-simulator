@@ -1,37 +1,33 @@
+import { findFreeFrame, loadPageIntoFrame } from "./shared.js";
 import type { MemoryFrameNumber, PageNumber } from "../../types/address.js";
 import type {
-    MemoryFrameSnapshot,
     PageReplacement,
+    PageReplacementAlgorithm,
     SimulationState,
 } from "../../types/simulation.js";
 
-/**
- * 查找第一个空闲内存块。
- *
- * @param memoryFrames 当前模拟器内存块状态。
- * @returns 空闲内存块号；如果没有空闲块，返回 null。
- */
-function findFreeFrame(memoryFrames: MemoryFrameSnapshot[]): MemoryFrameNumber | null {
-    const frame = memoryFrames.find((item) => item.pageNumber === null);
-
-    return frame?.frameNumber ?? null;
+interface FifoState {
+    queue: MemoryFrameNumber[];
 }
 
 /**
- * 将页面装入指定内存块。
+ * 读取 FIFO 专用状态。
  *
  * @param state 当前模拟器状态。
- * @param frameNumber 要装入页面的内存块号。
- * @param pageNumber 要装入的页号。
+ * @returns FIFO 专用状态。
  */
-function loadPageIntoFrame(
-    state: SimulationState,
-    frameNumber: MemoryFrameNumber,
-    pageNumber: PageNumber,
-): void {
-    state.memoryFrames[frameNumber] = {
-        frameNumber,
-        pageNumber,
+function getFifoState(state: SimulationState): FifoState {
+    return state.algorithmState as FifoState;
+}
+
+/**
+ * 创建 FIFO 专用初始状态。
+ *
+ * @returns FIFO 专用状态。
+ */
+function createInitialFifoState(): FifoState {
+    return {
+        queue: [],
     };
 }
 
@@ -47,12 +43,13 @@ export function handleFifoPageFault(
     pageNumber: PageNumber,
 ): PageReplacement {
     state.pageFaultCount += 1;
+    const fifoState = getFifoState(state);
 
     const freeFrame = findFreeFrame(state.memoryFrames);
 
     if (freeFrame !== null) {
         loadPageIntoFrame(state, freeFrame, pageNumber);
-        state.fifoQueue.push(freeFrame);
+        fifoState.queue.push(freeFrame);
 
         return {
             frameNumber: freeFrame,
@@ -61,7 +58,7 @@ export function handleFifoPageFault(
         };
     }
 
-    const replacedFrame = state.fifoQueue.shift();
+    const replacedFrame = fifoState.queue.shift();
 
     if (replacedFrame === undefined) {
         throw new Error("FIFO 队列为空，无法执行页面置换");
@@ -70,7 +67,7 @@ export function handleFifoPageFault(
     const evictedPageNumber = state.memoryFrames[replacedFrame]?.pageNumber ?? null;
 
     loadPageIntoFrame(state, replacedFrame, pageNumber);
-    state.fifoQueue.push(replacedFrame);
+    fifoState.queue.push(replacedFrame);
 
     return {
         frameNumber: replacedFrame,
@@ -78,3 +75,10 @@ export function handleFifoPageFault(
         evictedPageNumber,
     };
 }
+
+export const FIFO_ALGORITHM: PageReplacementAlgorithm = {
+    name: "fifo",
+    createInitialState: createInitialFifoState,
+    handlePageHit: () => {},
+    handlePageFault: handleFifoPageFault,
+};

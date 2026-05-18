@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { FIFO_ALGORITHM } from "../src/core/algorithms/fifo.js";
+import { LRU_ALGORITHM } from "../src/core/algorithms/lru.js";
 import {
     createInitialSimulationState,
-    executeFifoStep,
-    executeLruStep,
+    executeSimulationStep,
     runSimulation,
-    simulateFifoInstructions,
+    simulateInstructions,
 } from "../src/core/simulator.js";
 import type { InstructionAccess } from "../src/types/instruction.js";
 
@@ -20,21 +21,20 @@ describe("createInitialSimulationState", () => {
             { frameNumber: 2, pageNumber: null },
             { frameNumber: 3, pageNumber: null },
         ]);
-        expect(state.fifoQueue).toEqual([]);
-        expect(state.lruQueue).toEqual([]);
+        expect(state.algorithmState).toEqual({ queue: [] });
     });
 });
 
-describe("executeFifoStep", () => {
+describe("executeSimulationStep", () => {
     it("marks the first access to a page as a page fault", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(FIFO_ALGORITHM);
         const instruction: InstructionAccess = {
             step: 1,
             instructionNumber: 25,
             source: "start",
         };
 
-        const result = executeFifoStep(state, instruction);
+        const result = executeSimulationStep(state, instruction, FIFO_ALGORITHM);
 
         expect(result.isPageFault).toBe(true);
         expect(result.pageNumber).toBe(2);
@@ -50,19 +50,27 @@ describe("executeFifoStep", () => {
     });
 
     it("does not mark repeated access to an in-memory page as a page fault", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(FIFO_ALGORITHM);
 
-        executeFifoStep(state, {
-            step: 1,
-            instructionNumber: 25,
-            source: "start",
-        });
+        executeSimulationStep(
+            state,
+            {
+                step: 1,
+                instructionNumber: 25,
+                source: "start",
+            },
+            FIFO_ALGORITHM,
+        );
 
-        const repeatedAccess = executeFifoStep(state, {
-            step: 2,
-            instructionNumber: 26,
-            source: "sequential",
-        });
+        const repeatedAccess = executeSimulationStep(
+            state,
+            {
+                step: 2,
+                instructionNumber: 26,
+                source: "sequential",
+            },
+            FIFO_ALGORITHM,
+        );
 
         expect(repeatedAccess.isPageFault).toBe(false);
         expect(repeatedAccess.memoryFrameNumber).toBe(0);
@@ -70,16 +78,17 @@ describe("executeFifoStep", () => {
         expect(repeatedAccess.replacement).toBeNull();
         expect(repeatedAccess.pageFaultCount).toBe(1);
     });
-});
-
-describe("executeLruStep", () => {
-    it("marks the first access to a page as a page fault", () => {
-        const state = createInitialSimulationState();
-        const result = executeLruStep(state, {
-            step: 1,
-            instructionNumber: 25,
-            source: "start",
-        });
+    it("can execute a step with LRU algorithm", () => {
+        const state = createInitialSimulationState(LRU_ALGORITHM);
+        const result = executeSimulationStep(
+            state,
+            {
+                step: 1,
+                instructionNumber: 25,
+                source: "start",
+            },
+            LRU_ALGORITHM,
+        );
 
         expect(result.isPageFault).toBe(true);
         expect(result.pageNumber).toBe(2);
@@ -92,15 +101,15 @@ describe("executeLruStep", () => {
     });
 });
 
-describe("simulateFifoInstructions", () => {
-    it("runs a basic FIFO simulation over a custom sequence", () => {
+describe("simulateInstructions", () => {
+    it("runs a basic simulation over a custom sequence", () => {
         const instructions: InstructionAccess[] = [
             { step: 1, instructionNumber: 0, source: "start" },
             { step: 2, instructionNumber: 1, source: "sequential" },
             { step: 3, instructionNumber: 10, source: "backJump" },
         ];
 
-        const result = simulateFifoInstructions(instructions);
+        const result = simulateInstructions(instructions, FIFO_ALGORITHM);
 
         expect(result.algorithm).toBe("fifo");
         expect(result.steps).toHaveLength(3);

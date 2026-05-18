@@ -15,8 +15,7 @@ export interface MemoryFrameSnapshot {
 
 export interface SimulationState {
     memoryFrames: MemoryFrameSnapshot[];
-    fifoQueue: MemoryFrameNumber[];
-    lruQueue: MemoryFrameNumber[];
+    algorithmState: unknown;
     pageFaultCount: number;
 }
 
@@ -24,6 +23,13 @@ export interface PageReplacement {
     frameNumber: MemoryFrameNumber;
     loadedPageNumber: PageNumber;
     evictedPageNumber: PageNumber | null;
+}
+
+export interface PageReplacementAlgorithm {
+    name: ReplacementAlgorithm;
+    createInitialState: () => unknown;
+    handlePageHit: (state: SimulationState, frameNumber: MemoryFrameNumber) => void;
+    handlePageFault: (state: SimulationState, pageNumber: PageNumber) => PageReplacement;
 }
 
 export interface SimulationStep {

@@ -1,37 +1,33 @@
+import { findFreeFrame, loadPageIntoFrame } from "./shared.js";
 import type { MemoryFrameNumber, PageNumber } from "../../types/address.js";
 import type {
-    MemoryFrameSnapshot,
     PageReplacement,
+    PageReplacementAlgorithm,
     SimulationState,
 } from "../../types/simulation.js";
 
-/**
- * 查找第一个空闲内存块。
- *
- * @param memoryFrames 当前模拟器内存块状态。
- * @returns 空闲内存块号；如果没有空闲块，返回 null。
- */
-function findFreeFrame(memoryFrames: MemoryFrameSnapshot[]): MemoryFrameNumber | null {
-    const frame = memoryFrames.find((item) => item.pageNumber === null);
-
-    return frame?.frameNumber ?? null;
+interface LruState {
+    queue: MemoryFrameNumber[];
 }
 
 /**
- * 将页面装入指定内存块。
+ * 读取 LRU 专用状态。
  *
  * @param state 当前模拟器状态。
- * @param frameNumber 要装入页面的内存块号。
- * @param pageNumber 要装入的页号。
+ * @returns LRU 专用状态。
  */
-function loadPageIntoFrame(
-    state: SimulationState,
-    frameNumber: MemoryFrameNumber,
-    pageNumber: PageNumber,
-): void {
-    state.memoryFrames[frameNumber] = {
-        frameNumber,
-        pageNumber,
+function getLruState(state: SimulationState): LruState {
+    return state.algorithmState as LruState;
+}
+
+/**
+ * 创建 LRU 专用初始状态。
+ *
+ * @returns LRU 专用状态。
+ */
+function createInitialLruState(): LruState {
+    return {
+        queue: [],
     };
 }
 
@@ -45,8 +41,10 @@ export function markLruFrameAsUsed(
     state: SimulationState,
     frameNumber: MemoryFrameNumber,
 ): void {
-    state.lruQueue = state.lruQueue.filter((item) => item !== frameNumber);
-    state.lruQueue.push(frameNumber);
+    const lruState = getLruState(state);
+
+    lruState.queue = lruState.queue.filter((item) => item !== frameNumber);
+    lruState.queue.push(frameNumber);
 }
 
 /**
@@ -61,6 +59,7 @@ export function handleLruPageFault(
     pageNumber: PageNumber,
 ): PageReplacement {
     state.pageFaultCount += 1;
+    const lruState = getLruState(state);
 
     const freeFrame = findFreeFrame(state.memoryFrames);
 
@@ -75,7 +74,7 @@ export function handleLruPageFault(
         };
     }
 
-    const replacedFrame = state.lruQueue.shift();
+    const replacedFrame = lruState.queue.shift();
 
     if (replacedFrame === undefined) {
         throw new Error("LRU 队列为空，无法执行页面置换");
@@ -92,3 +91,10 @@ export function handleLruPageFault(
         evictedPageNumber,
     };
 }
+
+export const LRU_ALGORITHM: PageReplacementAlgorithm = {
+    name: "lru",
+    createInitialState: createInitialLruState,
+    handlePageHit: markLruFrameAsUsed,
+    handlePageFault: handleLruPageFault,
+};

@@ -1,35 +1,72 @@
 import { describe, expect, it } from "vitest";
 
+import { LRU_ALGORITHM } from "../src/core/algorithms/lru.js";
 import {
     createInitialSimulationState,
-    executeLruStep,
+    executeSimulationStep,
     runSimulation,
 } from "../src/core/simulator.js";
 
 describe("LRU replacement algorithm", () => {
     it("updates recent usage order when a page is hit", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(LRU_ALGORITHM);
 
-        executeLruStep(state, { step: 1, instructionNumber: 0, source: "start" });
-        executeLruStep(state, { step: 2, instructionNumber: 10, source: "backJump" });
-        executeLruStep(state, { step: 3, instructionNumber: 1, source: "sequential" });
+        executeSimulationStep(
+            state,
+            { step: 1, instructionNumber: 0, source: "start" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 2, instructionNumber: 10, source: "backJump" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 3, instructionNumber: 1, source: "sequential" },
+            LRU_ALGORITHM,
+        );
 
-        expect(state.lruQueue).toEqual([1, 0]);
+        expect(state.algorithmState).toEqual({ queue: [1, 0] });
     });
 
     it("replaces the least recently used page when memory is full", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(LRU_ALGORITHM);
 
-        executeLruStep(state, { step: 1, instructionNumber: 0, source: "start" });
-        executeLruStep(state, { step: 2, instructionNumber: 10, source: "backJump" });
-        executeLruStep(state, { step: 3, instructionNumber: 20, source: "backJump" });
-        executeLruStep(state, { step: 4, instructionNumber: 30, source: "backJump" });
-        executeLruStep(state, { step: 5, instructionNumber: 1, source: "sequential" });
-        const replacement = executeLruStep(state, {
-            step: 6,
-            instructionNumber: 40,
-            source: "backJump",
-        });
+        executeSimulationStep(
+            state,
+            { step: 1, instructionNumber: 0, source: "start" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 2, instructionNumber: 10, source: "backJump" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 3, instructionNumber: 20, source: "backJump" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 4, instructionNumber: 30, source: "backJump" },
+            LRU_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 5, instructionNumber: 1, source: "sequential" },
+            LRU_ALGORITHM,
+        );
+        const replacement = executeSimulationStep(
+            state,
+            {
+                step: 6,
+                instructionNumber: 40,
+                source: "backJump",
+            },
+            LRU_ALGORITHM,
+        );
 
         expect(replacement.isPageFault).toBe(true);
         expect(replacement.replacement).toEqual({

@@ -1,20 +1,41 @@
 import { describe, expect, it } from "vitest";
 
-import { createInitialSimulationState, executeFifoStep } from "../src/core/simulator.js";
+import { FIFO_ALGORITHM } from "../src/core/algorithms/fifo.js";
+import { createInitialSimulationState, executeSimulationStep } from "../src/core/simulator.js";
 
 describe("FIFO replacement algorithm", () => {
     it("replaces pages in FIFO order when memory is full", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(FIFO_ALGORITHM);
 
-        executeFifoStep(state, { step: 1, instructionNumber: 0, source: "start" });
-        executeFifoStep(state, { step: 2, instructionNumber: 10, source: "backJump" });
-        executeFifoStep(state, { step: 3, instructionNumber: 20, source: "backJump" });
-        executeFifoStep(state, { step: 4, instructionNumber: 30, source: "backJump" });
-        const replacement = executeFifoStep(state, {
-            step: 5,
-            instructionNumber: 40,
-            source: "backJump",
-        });
+        executeSimulationStep(
+            state,
+            { step: 1, instructionNumber: 0, source: "start" },
+            FIFO_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 2, instructionNumber: 10, source: "backJump" },
+            FIFO_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 3, instructionNumber: 20, source: "backJump" },
+            FIFO_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 4, instructionNumber: 30, source: "backJump" },
+            FIFO_ALGORITHM,
+        );
+        const replacement = executeSimulationStep(
+            state,
+            {
+                step: 5,
+                instructionNumber: 40,
+                source: "backJump",
+            },
+            FIFO_ALGORITHM,
+        );
 
         expect(replacement.isPageFault).toBe(true);
         expect(replacement.replacement).toEqual({
@@ -29,12 +50,24 @@ describe("FIFO replacement algorithm", () => {
     });
 
     it("does not change FIFO order when a page is hit", () => {
-        const state = createInitialSimulationState();
+        const state = createInitialSimulationState(FIFO_ALGORITHM);
 
-        executeFifoStep(state, { step: 1, instructionNumber: 0, source: "start" });
-        executeFifoStep(state, { step: 2, instructionNumber: 10, source: "backJump" });
-        executeFifoStep(state, { step: 3, instructionNumber: 1, source: "sequential" });
+        executeSimulationStep(
+            state,
+            { step: 1, instructionNumber: 0, source: "start" },
+            FIFO_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 2, instructionNumber: 10, source: "backJump" },
+            FIFO_ALGORITHM,
+        );
+        executeSimulationStep(
+            state,
+            { step: 3, instructionNumber: 1, source: "sequential" },
+            FIFO_ALGORITHM,
+        );
 
-        expect(state.fifoQueue).toEqual([0, 1]);
+        expect(state.algorithmState).toEqual({ queue: [0, 1] });
     });
 });
