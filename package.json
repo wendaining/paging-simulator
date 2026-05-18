@@ -5,12 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:server": "tsx watch src/server.ts",
+    "dev:web": "vite --host 127.0.0.1",
     "build": "tsc",
+    "build:web": "vite build",
     "start": "node dist/server.js",
     "test": "vitest run"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "@element-plus/icons-vue": "^2.3.2",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "element-plus": "^2.14.0",
+    "express": "^5.1.0",
+    "vite": "^7.3.3",
+    "vue": "^3.5.34"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",

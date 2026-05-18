@@ -1152,3 +1152,127 @@ curl -s -o /tmp/paging-api-stage9.json -w '%{http_code} %{size_download}\n' 'htt
 - 缺页率等于 `pageFaultCount / instructions.length`。
 
 同时扩展了 `tests/simulator.test.ts`，确认核心模拟结果也包含课程配置、访问序列和缺页率。
+
+## 第 10 阶段：前端搭建和 API 接入
+
+本阶段新增了 Vue + Element Plus 前端页面，入口文件是：
+
+```text
+index.html
+frontend/src/main.ts
+frontend/src/App.vue
+```
+
+### 启动方式
+
+后端仍然运行在 `3000` 端口：
+
+```bash
+npm run dev:server
+```
+
+前端运行在 `5173` 端口：
+
+```bash
+npm run dev:web
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:5173/
+```
+
+原来的后端启动命令 `npm run dev` 仍然保留，等价于启动后端服务。
+
+### 前端如何调用后端
+
+前端使用 Vite，配置文件是 `vite.config.ts`。
+
+其中把 `/api` 代理到了后端：
+
+```ts
+server: {
+    proxy: {
+        "/api": "http://127.0.0.1:3000",
+        "/health": "http://127.0.0.1:3000",
+    },
+}
+```
+
+所以前端代码里可以直接请求：
+
+```ts
+fetch("/api/config")
+fetch("/api/simulations?algorithm=fifo&seed=1")
+```
+
+浏览器实际访问的是前端开发服务，但 `/api` 请求会被 Vite 转发给 Express 后端。
+
+### 算法切换
+
+前端页面里有一个算法下拉框，选项是：
+
+```text
+FIFO
+LRU
+CLOCK
+```
+
+切换算法时，前端不会刷新整个页面，而是重新请求同一个模拟接口：
+
+```text
+/api/simulations?algorithm=lru&seed=1
+```
+
+这相当于从头开始运行一轮新的模拟，然后用新的返回结果替换页面状态。
+
+### seed 输入
+
+页面提供了 seed 输入框。
+
+- 输入整数 seed 时，模拟结果可复现。
+- 留空时，后端会使用当前时间生成 seed。
+- 模拟完成后，页面会显示后端实际使用的 seed。
+
+### 页面当前展示内容
+
+第 10 阶段先完成基础接入和核心结果展示，页面已经展示：
+
+- 课程配置：指令数、页数、每页指令数、内存块数。
+- 当前算法。
+- 当前 seed。
+- 缺页次数。
+- 缺页率。
+- 执行步数。
+- 前 8 步模拟预览。
+
+完整页表、SWAP 可视化和更细的步骤展示留到第 11 阶段继续做。
+
+### curl 验证
+
+本阶段用 Vite 前端代理请求：
+
+```bash
+curl 'http://127.0.0.1:5173/api/simulations?algorithm=lru&seed=1'
+```
+
+再直接请求后端：
+
+```bash
+curl 'http://127.0.0.1:3000/api/simulations?algorithm=lru&seed=1'
+```
+
+关键结果一致：
+
+```json
+{
+  "algorithm": "lru",
+  "seed": 1,
+  "steps": 320,
+  "pageFaultCount": 145,
+  "pageFaultRate": 0.453125
+}
+```
+
+这说明前端代理和后端接口已经连通。
