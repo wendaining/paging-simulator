@@ -1,0 +1,1790 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电梯调度算法可视化程序设计报告</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #596579;
+      --line: #d9e0ea;
+      --paper: #ffffff;
+      --soft: #f5f7fb;
+      --accent: #1f5f99;
+      --accent-soft: #eaf3ff;
+      --code: #101827;
+      --danger: #b91c1c;
+      --font-song: "Times New Roman", "SimSun", "Songti SC", serif;
+      --font-hei: "Times New Roman", "SimHei", "Heiti SC", sans-serif;
+      --font-mono: "Times New Roman", "SimSun", "Songti SC", serif;
+      --size-sihao: 14pt;
+      --size-wuhao: 10.5pt;
+      --line-report: 18pt;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef2f7;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 40px));
+      margin: 28px auto;
+      padding: 56px 64px 72px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(23, 32, 51, 0.08);
+    }
+
+    .cover {
+      padding-bottom: 34px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .cover .school {
+      color: var(--muted);
+      font-size: var(--size-wuhao);
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-hei);
+      font-size: 18pt;
+      line-height: 24pt;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      color: var(--muted);
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 36px;
+      width: min(640px, 100%);
+      margin: 34px auto 0;
+      text-align: left;
+      font-size: var(--size-wuhao);
+    }
+
+    .meta div {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+
+    .meta strong {
+      display: inline-block;
+      min-width: 88px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .abstract {
+      margin: 28px 0;
+      padding: 18px 22px;
+      background: var(--soft);
+      border-left: 4px solid var(--accent);
+    }
+
+    .abstract h2,
+    .toc h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .keywords {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .toc {
+      margin: 28px 0 38px;
+      padding: 18px 22px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 24px;
+    }
+
+    h2.section {
+      margin: 9pt 0;
+      padding: var(--line-report) 0 0;
+      border-bottom: none;
+      font-family: var(--font-hei);
+      font-size: var(--size-sihao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-align: center;
+      break-before: page;
+      page-break-before: always;
+    }
+
+    h3 {
+      margin: 9pt 0;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-align: left;
+    }
+
+    h4 {
+      margin: 0;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-indent: 2em;
+    }
+
+    h5,
+    h6 {
+      margin: 0;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-indent: 2em;
+    }
+
+    p {
+      margin: 0;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 0 2em;
+      padding-left: 26px;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    li {
+      margin: 0;
+      text-align: justify;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #0f172a;
+      background: #eef2f7;
+      font-family: var(--font-mono);
+      font-size: var(--size-wuhao);
+    }
+
+    pre {
+      margin: 14px 0;
+      padding: 16px 18px;
+      overflow: auto;
+      color: #dbeafe;
+      background: var(--code);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px 11px;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--soft);
+      text-align: left;
+      font-weight: 700;
+      font-family: var(--font-hei);
+    }
+
+    .figure {
+      margin: 18px 0 22px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .diagram-frame {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      background:
+        linear-gradient(135deg, rgba(31, 95, 153, 0.08), rgba(255, 255, 255, 0) 42%),
+        radial-gradient(circle at 88% 18%, rgba(14, 116, 144, 0.10), transparent 28%),
+        #fbfcfe;
+    }
+
+    .figure figcaption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      text-align: center;
+    }
+
+    .screenshot {
+      display: block;
+      max-width: 100%;
+      max-height: 420px;
+      margin: 0 auto;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .chart-image {
+      display: block;
+      width: 100%;
+      max-height: 520px;
+      margin: 0 auto;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .arch-diagram {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.05fr 0.85fr 1fr 1fr 0.95fr;
+      gap: 18px;
+      align-items: stretch;
+      padding: 8px 2px;
+    }
+
+    .arch-diagram::before {
+      content: "";
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #9ab8d4 10%, #9ab8d4 90%, transparent);
+      transform: translateY(-50%);
+    }
+
+    .arch-node {
+      position: relative;
+      z-index: 1;
+      min-height: 126px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 7px;
+      padding: 14px 13px;
+      border: 1px solid #b9d5ef;
+      border-top: 4px solid var(--accent);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 12px 28px rgba(23, 32, 51, 0.10);
+    }
+
+    .arch-node::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -17px;
+      width: 16px;
+      color: #547798;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+
+    .arch-node:last-child::after {
+      content: "";
+    }
+
+    .arch-node .tag {
+      color: #64748b;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .arch-node strong {
+      color: var(--accent);
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .arch-node span {
+      color: var(--muted);
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .arch-node.frontend {
+      border-top-color: #0f766e;
+    }
+
+    .arch-node.api {
+      border-top-color: #1f5f99;
+    }
+
+    .arch-node.scheduler {
+      border-top-color: #7c3aed;
+    }
+
+    .arch-node.runner {
+      border-top-color: #c2410c;
+    }
+
+    .arch-node.store {
+      border-top-color: #475569;
+    }
+
+    .mermaid-flow {
+      display: block;
+      width: 100%;
+      height: auto;
+      font-family: var(--font-song);
+    }
+
+    .mermaid-flow .node {
+      fill: rgba(255, 255, 255, 0.96);
+      stroke: #8db8df;
+      stroke-width: 1.4;
+      filter: url(#diagramShadow);
+    }
+
+    .mermaid-flow .decision {
+      fill: #fffaf0;
+      stroke: #d29b45;
+      stroke-width: 1.6;
+      filter: url(#diagramShadow);
+    }
+
+    .mermaid-flow .terminal {
+      fill: #eef7f5;
+      stroke: #0f766e;
+    }
+
+    .mermaid-flow .write {
+      fill: #f6f1ff;
+      stroke: #7c3aed;
+    }
+
+    .mermaid-flow .arrow {
+      fill: none;
+      stroke: #406a8f;
+      stroke-width: 2;
+      marker-end: url(#arrowHead);
+    }
+
+    .mermaid-flow .loop {
+      fill: none;
+      stroke: #7c8797;
+      stroke-width: 1.8;
+      stroke-dasharray: 6 5;
+      marker-end: url(#arrowHeadMuted);
+    }
+
+    .mermaid-flow .label {
+      fill: #172033;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .mermaid-flow .sub {
+      fill: #596579;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      text-anchor: middle;
+    }
+
+    .mermaid-flow .edge-label {
+      fill: #475569;
+      font-size: var(--size-wuhao);
+      font-family: var(--font-song);
+      text-anchor: middle;
+    }
+
+    .architecture-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      font-family: var(--font-song);
+    }
+
+    .architecture-svg .zone {
+      fill: rgba(255, 255, 255, 0.72);
+      stroke: #cbd8e7;
+      stroke-width: 1.4;
+      stroke-dasharray: 7 5;
+    }
+
+    .architecture-svg .box {
+      fill: rgba(255, 255, 255, 0.96);
+      stroke: #8db8df;
+      stroke-width: 1.4;
+      filter: url(#archShadow);
+    }
+
+    .architecture-svg .box.api {
+      fill: #eff8ff;
+      stroke: #1f5f99;
+    }
+
+    .architecture-svg .box.core {
+      fill: #fff8ed;
+      stroke: #c47c2c;
+    }
+
+    .architecture-svg .box.runner {
+      fill: #f1fbf8;
+      stroke: #0f766e;
+    }
+
+    .architecture-svg .box.store {
+      fill: #f5f3ff;
+      stroke: #7c3aed;
+    }
+
+    .architecture-svg .flow-line {
+      fill: none;
+      stroke: #3d668a;
+      stroke-width: 2.2;
+    }
+
+    .architecture-svg .flow-line.muted {
+      stroke: #7c8797;
+      stroke-dasharray: 7 5;
+    }
+
+    .architecture-svg .title {
+      fill: #172033;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .architecture-svg .desc {
+      fill: #596579;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      text-anchor: middle;
+    }
+
+    .architecture-svg .zone-label {
+      fill: #64748b;
+      font-size: var(--size-wuhao);
+      font-family: var(--font-song);
+      letter-spacing: 0.05em;
+      text-anchor: middle;
+    }
+
+    .architecture-svg .edge-label {
+      fill: #475569;
+      font-size: var(--size-wuhao);
+      font-family: var(--font-song);
+      text-anchor: middle;
+    }
+
+    .todo-box {
+      margin: 14px 0 18px;
+      padding: 14px 16px;
+      border: 1px dashed #b45309;
+      border-left: 4px solid #b45309;
+      background: #fffbeb;
+      color: #513a11;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .todo-box strong {
+      color: #92400e;
+      font-family: var(--font-hei);
+    }
+
+    .note {
+      margin: 14px 0;
+      padding: 12px 14px;
+      border-left: 4px solid #94a3b8;
+      background: #f8fafc;
+      color: #334155;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .quote {
+      margin: 14px 0 18px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent);
+      background: #f8fafc;
+      color: #334155;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .danger {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .route {
+      white-space: nowrap;
+      font-family: var(--font-mono);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        padding: 28mm 24mm;
+        border: none;
+        box-shadow: none;
+      }
+
+      h2.section {
+        break-before: page;
+        page-break-before: always;
+      }
+
+      .cover + .abstract + .toc + h2.section {
+        break-before: page;
+        page-break-before: always;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: 100%;
+        margin: 0;
+        padding: 28px 18px 42px;
+      }
+
+      .meta,
+      .arch-diagram {
+        grid-template-columns: 1fr;
+      }
+
+      .arch-diagram::before,
+      .arch-node::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <div class="school">操作系统课程项目设计报告</div>
+      <h1>电梯调度算法可视化程序</h1>
+      <div class="subtitle">基于 Go 并发模型与 Web 前端的多电梯调度系统</div>
+      <div class="meta">
+        <div><strong>项目类型</strong>课程设计 / 综合实践</div>
+        <div><strong>技术栈</strong>Go、SQLite、Vue 3、Vite</div>
+        <div><strong>核心内容</strong>调度算法、HTTP API、并发模型</div>
+        <div><strong>运行方式</strong>Docker Compose / 本机启动</div>
+      </div>
+    </section>
+
+    <section class="abstract">
+      <h2>摘要</h2>
+      <p>本项目实现了一个面向操作系统课程的电梯调度算法可视化系统。系统以多部电梯共享楼层请求为基本场景，将乘客请求类比为待调度任务，将电梯类比为资源执行单元，由调度器决定请求分配，并由每部电梯的独立 goroutine 推进运行状态。后端使用 Go 标准库 <code>net/http</code> 提供 API，使用 SQLite 保存已完成请求；前端使用 Vue 3、Element Plus 与 Vite 实现可交互的楼层请求、轿厢请求、算法切换和运行日志展示。</p>
+      <div class="keywords"><strong>关键词：</strong>电梯调度；操作系统；Go；goroutine；HTTP API；Vue；SQLite</div>
+    </section>
+
+    <nav class="toc">
+      <h2>目录</h2>
+      <ol>
+        <li>项目概述</li>
+        <li>系统设计与实现</li>
+        <li>调度算法</li>
+        <li>Go 并发模型</li>
+        <li>总结</li>
+        <li>附录</li>
+      </ol>
+    </nav>
+
+    <h2 class="section">1. 项目概述</h2>
+
+    <h3>1.1 项目背景</h3>
+    <p>电梯调度是现实生活中的一个经典问题，同时也是操作系统调度问题的一个直观类比：多部电梯对应多个可执行资源，楼层请求和轿厢内请求对应等待被处理的任务，调度算法需要在公平性、响应速度和资源利用率之间作出权衡。本项目以一栋默认 20 层、5 部电梯的大楼为基础场景，但在实现上将楼层数、电梯数和运行节奏设计为可配置参数，便于测试不同规模下的调度行为。</p>
+    <p>本项目实现电梯调度过程与算法的可视化，提供 Web 可视化界面，支持在前端直接发起模拟电梯调度的请求、紧急制动和调度算法切换，后端持续推进离散时间片，并将当前系统状态通过 HTTP API 暴露给前端。</p>
+
+    <h3>1.2 项目目标</h3>
+    <ul>
+      <li>实现一个可运行的多电梯调度系统，支持楼层外部请求、轿厢内部请求和电梯状态展示。</li>
+      <li>实现并切换多种调度算法，包括第一可用（First Available）、最近空闲（Nearest Idle）、先来先服务（FCFS）、扫描算法（SCAN）和 LOOK 扫描。</li>
+      <li>使用 Go 的 goroutine 和 channel 表达“每部电梯作为独立执行单元”的并发模型。</li>
+      <li>通过 HTTP API 和 Vue 前端完成前后端通信，并将调度过程可视化。</li>
+      <li>使用 SQLite 保存已完成请求，为后续算法统计和实验对比提供数据来源。</li>
+    </ul>
+
+    <h3>1.3 系统运行流程</h3>
+    <p>系统启动后，后端创建 <code>System</code> 实例和电梯运行 goroutine，并自动周期性调用 <code>Step()</code> 推进模拟时间。前端页面通过轮询 <code>GET /api/state</code> 获取系统快照，用户在界面中点击楼层按钮或提交轿厢请求后，前端向后端发送 HTTP 请求，后端将请求写入运行态数据结构，再由当前调度器在后续 tick 中完成分配。</p>
+
+    <figure class="figure diagram-frame">
+      <div class="arch-diagram">
+        <div class="arch-node frontend">
+          <span class="tag">Vue / Vite</span>
+          <strong>Web 前端</strong>
+          <span>提交请求、展示状态、切换算法</span>
+        </div>
+        <div class="arch-node api">
+          <span class="tag">net/http</span>
+          <strong>HTTP API</strong>
+          <span>解析 JSON、校验输入、返回状态</span>
+        </div>
+        <div class="arch-node scheduler">
+          <span class="tag">Scheduler</span>
+          <strong>调度器</strong>
+          <span>选择响应请求的电梯</span>
+        </div>
+        <div class="arch-node runner">
+          <span class="tag">goroutine</span>
+          <strong>电梯运行层</strong>
+          <span>每部电梯独立 goroutine 推进状态</span>
+        </div>
+        <div class="arch-node store">
+          <span class="tag">SQLite</span>
+          <strong>SQLite</strong>
+          <span>保存已完成请求历史</span>
+        </div>
+      </div>
+      <figcaption>图 1-1 系统运行流程概览</figcaption>
+    </figure>
+
+    <h3>1.4 技术栈与运行方式</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>模块</th>
+          <th>技术选择</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>后端语言</td>
+          <td>Go</td>
+          <td>利用 goroutine、channel 和 <code>sync.Mutex</code> 实现并发模型与状态同步。</td>
+        </tr>
+        <tr>
+          <td>HTTP 服务</td>
+          <td><code>net/http</code></td>
+          <td>使用 Go 标准库实现 REST API</td>
+        </tr>
+        <tr>
+          <td>数据持久化</td>
+          <td>SQLite</td>
+          <td>单文件数据库，简单轻便，方便数据统计。</td>
+        </tr>
+        <tr>
+          <td>前端</td>
+          <td>Vue 3 + Element Plus + Vite</td>
+          <td>用于构建交互式可视化界面，Vite dev proxy 用于开发环境 API 转发。</td>
+        </tr>
+        <tr>
+          <td>环境封装</td>
+          <td>Docker</td>
+          <td>同时启动后端和前端，便于在不同机器上复现运行环境。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Docker 版本启动方式（推荐）</h4>
+    <pre><code>docker compose up</code></pre>
+    <p>启动成功后访问前端页面：</p>
+    <pre><code>http://localhost:5173</code></pre>
+
+    <h4>普通本机启动方式</h4>
+    <pre><code># 启动后端
+go run ./cmd/server
+
+# 另开终端启动前端
+cd web
+npm install
+npm run dev</code></pre>
+
+    <figure class="figure">
+      <img class="screenshot" src="../img/readme-show.png" alt="系统运行界面截图">
+      <figcaption>图 1-2 系统运行界面示意</figcaption>
+    </figure>
+
+    <h2 class="section">2. 系统设计与实现</h2>
+
+    <h3>2.1 系统架构概览</h3>
+    <p>系统采用前后端分离但部署简单的结构。前端负责渲染大楼、电梯、请求按钮和配置面板；后端负责维护状态，所有请求创建、调度算法切换、系统重启和紧急制动均通过 API 进入后端。调度层不直接处理 HTTP，而是围绕 <code>System</code>、<code>Request</code>、<code>Elevator</code> 和 <code>Scheduler</code> 等核心类型实现业务逻辑。</p>
+    <figure class="figure diagram-frame">
+      <svg class="architecture-svg" viewBox="0 0 900 390" role="img" aria-label="系统运行架构与数据流图">
+        <defs>
+          <filter id="archShadow" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#172033" flood-opacity="0.13"/>
+          </filter>
+          <marker id="archArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#3d668a"/>
+          </marker>
+          <marker id="archArrowMuted" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#7c8797"/>
+          </marker>
+        </defs>
+        <rect class="zone" x="270" y="34" width="382" height="298" rx="20"/>
+        <text class="zone-label" x="461" y="62">Go backend / internal/elevator</text>
+        <rect class="box" x="40" y="110" width="150" height="86" rx="14"/>
+        <text class="title" x="115" y="144">Vue 前端</text>
+        <text class="desc" x="115" y="168">状态轮询 / 用户操作</text>
+        <rect class="box api" x="250" y="108" width="150" height="90" rx="14"/>
+        <text class="title" x="325" y="142">HTTP API</text>
+        <text class="desc" x="325" y="166">校验 JSON</text>
+        <text class="desc" x="325" y="184">调用 System</text>
+        <rect class="box core" x="475" y="92" width="142" height="82" rx="14"/>
+        <text class="title" x="546" y="124">System</text>
+        <text class="desc" x="546" y="148">Requests / Elevators</text>
+        <rect class="box core" x="475" y="225" width="142" height="74" rx="14"/>
+        <text class="title" x="546" y="256">Scheduler</text>
+        <text class="desc" x="546" y="279">选择响应电梯</text>
+        <rect class="box runner" x="704" y="68" width="156" height="86" rx="14"/>
+        <text class="title" x="782" y="102">Elevator runners</text>
+        <text class="desc" x="782" y="126">每部电梯一个 goroutine</text>
+        <rect class="box store" x="704" y="226" width="156" height="86" rx="14"/>
+        <text class="title" x="782" y="260">SQLite</text>
+        <text class="desc" x="782" y="284">保存完成请求</text>
+        <path class="flow-line" marker-end="url(#archArrow)" d="M 190 142 C 210 142 226 142 246 142"/>
+        <text class="edge-label" x="220" y="130">POST / GET</text>
+        <path class="flow-line" marker-end="url(#archArrow)" d="M 400 142 C 430 142 445 132 471 132"/>
+        <text class="edge-label" x="436" y="118">业务调用</text>
+        <path class="flow-line" marker-end="url(#archArrow)" d="M 546 174 V 221"/>
+        <text class="edge-label" x="590" y="202">pending</text>
+        <path class="flow-line" marker-end="url(#archArrow)" d="M 617 132 C 650 124 668 114 700 111"/>
+        <text class="edge-label" x="660" y="101">tick 命令</text>
+        <path class="flow-line muted" marker-end="url(#archArrowMuted)" d="M 704 142 C 666 164 650 190 618 224"/>
+        <text class="edge-label" x="680" y="184">新状态</text>
+        <path class="flow-line muted" marker-end="url(#archArrowMuted)" d="M 617 263 C 653 263 665 270 700 270"/>
+        <text class="edge-label" x="663" y="256">历史写入</text>
+        <path class="flow-line muted" marker-end="url(#archArrowMuted)" d="M 250 171 C 220 202 207 218 190 178"/>
+        <text class="edge-label" x="221" y="219">Snapshot</text>
+      </svg>
+      <figcaption>图 2-1 系统运行架构与主要数据流</figcaption>
+    </figure>
+    <table>
+      <thead>
+        <tr>
+          <th>层次</th>
+          <th>主要文件或目录</th>
+          <th>职责</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>程序入口</td>
+          <td><code>cmd/server/main.go</code></td>
+          <td>创建系统配置、初始化电梯系统、启动自动 tick、注册 HTTP 路由。</td>
+        </tr>
+        <tr>
+          <td>API 层</td>
+          <td><code>internal/api/handler.go</code></td>
+          <td>接收前端请求，完成 JSON 解码、输入校验、系统调用和响应编码。</td>
+        </tr>
+        <tr>
+          <td>核心模型</td>
+          <td><code>internal/elevator/model.go</code>、<code>system.go</code></td>
+          <td>定义电梯、请求、停靠计划和系统状态，并提供状态推进方法。</td>
+        </tr>
+        <tr>
+          <td>调度层</td>
+          <td><code>internal/elevator/*Scheduler.go</code></td>
+          <td>实现不同调度策略，统一通过 <code>Scheduler</code> 接口调用。</td>
+        </tr>
+        <tr>
+          <td>电梯运行层</td>
+          <td><code>internal/elevator/elevator_runner.go</code></td>
+          <td>每部电梯使用独立 goroutine 接收 tick 命令并计算下一状态。</td>
+        </tr>
+        <tr>
+          <td>持久化层</td>
+          <td><code>internal/elevator/request_store.go</code></td>
+          <td>将完成请求写入 SQLite，供后续统计和算法对比使用。</td>
+        </tr>
+        <tr>
+          <td>前端</td>
+          <td><code>web/src</code></td>
+          <td>实现状态轮询、请求提交、控制面板、日志终端和可视化布局。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>调度算法和电梯运行逻辑都位于后端核心模型中，前端只通过 API 操作系统状态，不复制调度逻辑；SQLite 只记录历史数据，不影响运行态调度性能。</p>
+
+    <h3>2.2 项目结构</h3>
+    <pre><code>os_sp26_proj1/
+├── cmd/server/          # Go 服务入口
+├── internal/api/        # HTTP API handler 与自动步进逻辑
+├── internal/elevator/   # 电梯模型、调度算法、并发运行、SQLite 持久化
+├── web/                 # Vue 3 + Element Plus + Vite 前端
+├── docs/                # 开发记录、设计文档和最终报告
+├── analysis/            # 调度实验与图表输出
+├── scripts/             # 本地分析脚本
+├── data/                # 运行时生成的 SQLite 数据库
+├── img/                 # README 和报告使用的图片资源
+└── docker-compose.yml   # Docker Compose 启动配置
+</code></pre>
+    <p>Go 项目中 <code>internal</code> 目录表示内部包，不希望被仓库外部直接导入。该结构使 API 层和电梯核心模型在同一后端项目中保持清晰边界：<code>internal/api</code> 关心 HTTP 输入输出，<code>internal/elevator</code> 关心调度和状态推进。</p>
+
+    <h3>2.3 核心数据模型</h3>
+    <p>系统的核心数据模型围绕请求、停靠计划、电梯和系统四类对象展开：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>类型</th>
+          <th>关键字段</th>
+          <th>设计说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Direction</code></td>
+          <td><code>idle</code>、<code>up</code>、<code>down</code></td>
+          <td>统一描述电梯运动方向和请求方向。</td>
+        </tr>
+        <tr>
+          <td><code>Request</code></td>
+          <td><code>ID</code>、<code>Floor</code>、<code>Kind</code>、<code>Status</code></td>
+          <td>表示 hall 或 cabin 请求，状态包括 pending、assigned、done。</td>
+        </tr>
+        <tr>
+          <td><code>StopPlan</code></td>
+          <td><code>Floor</code>、<code>Reason</code>、<code>RequestIDs</code></td>
+          <td>描述一次停靠及其原因，同一停靠可完成多个请求。</td>
+        </tr>
+        <tr>
+          <td><code>Elevator</code></td>
+          <td><code>CurrentFloor</code>、<code>Direction</code>、<code>Stops</code></td>
+          <td>保存单部电梯当前状态、后续停靠计划和门/移动倒计时。</td>
+        </tr>
+        <tr>
+          <td><code>System</code></td>
+          <td><code>Elevators</code>、<code>Requests</code>、<code>CurrentTick</code></td>
+          <td>保存全局运行态状态，是调度器和 API 共同操作的核心对象。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>先说明系统中重要的字段和概念：<code>hall</code> 请求表示乘客在楼层外按上行或下行按钮，例如“14 楼上行”；它还没有天然归属某部电梯，必须由调度器决定哪部电梯响应。<code>cabin</code> 请求表示乘客进入某部电梯后在轿厢内选择目标楼层，例如“Cabin #4 去 11 楼”；它天然归属已选中的电梯，因此创建时会携带 <code>ElevatorID</code> 并直接加入这部电梯的停靠计划。请求状态中的 <code>pending</code> 表示已创建但尚未分配，<code>assigned</code> 表示已被某部电梯接收并写入停靠计划，<code>done</code> 表示请求已在开门完成时结束并写入历史数据库。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>字段 / 概念</th>
+          <th>含义</th>
+          <th>在系统中的作用</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Kind</code></td>
+          <td>请求来源，取值为 hall 或 cabin。</td>
+          <td>决定请求是否需要调度器分配；hall 请求等待调度，cabin 请求直接归属指定电梯。</td>
+        </tr>
+        <tr>
+          <td><code>Direction</code></td>
+          <td>即时方向，表示电梯当前正在上行、下行或空闲。</td>
+          <td>用于前端展示和单 tick 状态推进。</td>
+        </tr>
+        <tr>
+          <td><code>ScanDirection</code></td>
+          <td>调度方向，表示 SCAN / LOOK 算法当前优先服务的长期方向。</td>
+          <td>用于判断请求是否顺路、停靠计划如何排序，和即时运动方向不完全等同。</td>
+        </tr>
+        <tr>
+          <td><code>StopPlan</code></td>
+          <td>一条停靠计划，包含楼层、停靠原因、方向和关联请求 ID。</td>
+          <td>把抽象请求转换成电梯可以执行的动作，并允许同层多个请求合并完成。</td>
+        </tr>
+        <tr>
+          <td><code>RequestIDs</code></td>
+          <td>某次停靠对应的一组请求编号。</td>
+          <td>开门完成时据此批量标记请求完成，避免同层 hall 与 cabin 请求互相丢失。</td>
+        </tr>
+        <tr>
+          <td><code>CurrentTick</code></td>
+          <td>全局模拟时间。</td>
+          <td>统一计算等待时间、移动时间、开门时间、报警暂停时间和算法统计指标。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>从设计结构看，核心模型是一套围绕“请求如何被创建、分配、执行、完成”的状态体系。围绕这套结构，几个关键设计点分别解决不同层次的问题：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>设计点</th>
+          <th>解决的问题</th>
+          <th>实现方式</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>运行态请求表</td>
+          <td>请求不能在分配后从系统中消失，否则无法记录等待时间、分配电梯和完成时间。</td>
+          <td><code>Requests map[int64]*Request</code> 保存 pending 和 assigned 请求；完成后写入 SQLite 并从 map 删除。</td>
+        </tr>
+        <tr>
+          <td>hall / cabin 请求区分</td>
+          <td>楼层外部请求需要调度，电梯内部请求天然属于某部电梯，不能被分给其他电梯。</td>
+          <td>cabin 请求携带 <code>ElevatorID</code>，在 <code>AddRequest</code> 中直接分配给对应电梯，不进入 pending。</td>
+        </tr>
+        <tr>
+          <td>停靠计划</td>
+          <td>只用楼层整数无法区分同层上行、同层下行和轿厢目标，容易错误合并停靠。</td>
+          <td><code>StopPlan</code> 记录 <code>Floor</code>、<code>Reason</code>、<code>Direction</code> 和 <code>RequestIDs</code>。</td>
+        </tr>
+        <tr>
+          <td>离散 tick 时间</td>
+          <td>调度、移动、开门、请求等待都需要统一时间单位，直接使用真实时间不利于测试。</td>
+          <td><code>CurrentTick</code> 记录全局模拟时间，自动 ticker 每隔固定真实时间调用一次 <code>Step()</code>，每次 Step 推进一个模拟 tick。</td>
+        </tr>
+        <tr>
+          <td>电梯状态机</td>
+          <td>电梯不只是“在哪一层”，还要描述移动、开门、扫描方向和异常暂停。</td>
+          <td><code>Elevator</code> 保存方向、倒计时、停靠计划和 <code>EmergencyStop</code>；紧急制动只是状态机中的一种暂停状态。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>tick 是本系统的统一时间单位。后端默认用真实时间中的固定间隔触发一次自动步进，步进时调用 <code>System.Step()</code>，调度器先分配请求，再让电梯状态前进一步，最后把 <code>CurrentTick</code> 加一。这样设计的好处是测试可以直接调用 <code>Step()</code> 推进任意数量的 tick，不依赖真实计时器，也能精确比较不同算法的等待时间。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>tick 相关字段</th>
+          <th>含义</th>
+          <th>示例用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>CreatedTick</code></td>
+          <td>请求被创建时的 tick。</td>
+          <td>用于计算请求已经等待了多久。</td>
+        </tr>
+        <tr>
+          <td><code>AssignedTick</code></td>
+          <td>请求被分配给电梯时的 tick。</td>
+          <td>用于区分调度等待和电梯执行耗时。</td>
+        </tr>
+        <tr>
+          <td><code>CompletedTick</code></td>
+          <td>请求完成并写入历史记录时的 tick。</td>
+          <td>用于统计总耗时和生成算法对比数据。</td>
+        </tr>
+        <tr>
+          <td><code>TicksPerFloor</code></td>
+          <td>电梯移动一层需要的 tick 数。</td>
+          <td>把楼层距离转换成模拟运行时间。</td>
+        </tr>
+        <tr>
+          <td><code>DoorBaseTicks</code>、<code>TickPerPassenger</code></td>
+          <td>开门基础时间和乘客上下电梯追加时间。</td>
+          <td>让停靠不只是瞬间完成，而会占用若干 tick。</td>
+        </tr>
+        <tr>
+          <td><code>EmergencyRemainingTicks</code></td>
+          <td>紧急制动剩余暂停 tick 数。</td>
+          <td>报警触发后让对应电梯暂停固定时间，再自动恢复。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 HTTP API 设计</h3>
+    <p>后端 API 采用 JSON 作为请求和响应格式。所有会修改系统状态的接口使用 POST，只读接口使用 GET。handler 层会拒绝不匹配的方法、非法 JSON、未知字段和不合法业务参数。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>方法</th>
+          <th>路径</th>
+          <th>功能</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/health</td>
+          <td>健康检查，返回服务是否可用。</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/config</td>
+          <td>返回前端轮询和展示所需配置，如自动 tick 间隔、移动耗时、开门耗时和紧急制动 tick 数。</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/state</td>
+          <td>返回完整系统快照，包括楼层数、电梯状态、运行态请求和当前调度算法。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/request</td>
+          <td>创建 hall 或 cabin 请求。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/scheduler</td>
+          <td>切换调度算法，并重建系统运行周期。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/floor-count</td>
+          <td>调整楼层数，重启系统。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/elevator-count</td>
+          <td>调整电梯数，重启系统。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/elevator-emergency</td>
+          <td>触发指定电梯的紧急制动。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>2.4.1 请求示例</h4>
+    <p>创建楼层外部上行请求：</p>
+    <pre><code>POST /api/request
+Content-Type: application/json
+
+{
+  "floor": 6,
+  "direction": "up",
+  "kind": "hall"
+}</code></pre>
+
+    <p>创建 3 号电梯内部到 12 楼的请求：</p>
+    <pre><code>POST /api/request
+Content-Type: application/json
+
+{
+  "floor": 12,
+  "direction": "idle",
+  "kind": "cabin",
+  "elevatorId": 3
+}</code></pre>
+
+    <p>触发 4 号电梯紧急制动：</p>
+    <pre><code>POST /api/elevator-emergency
+Content-Type: application/json
+
+{
+  "elevatorId": 4
+}</code></pre>
+
+    <div class="note"><strong>错误处理约定：</strong>非法输入返回 400，方法不匹配返回 405，服务器内部状态或编码错误返回 500。JSON 解码使用 <code>DisallowUnknownFields</code>，避免前端提交未定义字段后被后端静默忽略。</div>
+
+    <h3>2.5 SQLite 持久化</h3>
+    <p>系统使用 SQLite 保存已完成请求。数据库表 <code>completed_requests</code> 的字段与 <code>Request</code> 结构基本对应，包括请求 ID、楼层、方向、请求来源、状态、创建 tick、分配 tick、完成 tick 和响应电梯 ID。请求完成时，后端调用 <code>RequestStore.SaveCompletedRequest</code> 写入数据库。</p>
+    <pre><code>CREATE TABLE IF NOT EXISTS completed_requests (
+  id INTEGER PRIMARY KEY,
+  floor INTEGER NOT NULL,
+  direction TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_tick INTEGER NOT NULL,
+  assigned_tick INTEGER NOT NULL,
+  completed_tick INTEGER NOT NULL,
+  assigned_elevator_id INTEGER NOT NULL
+);</code></pre>
+    <p>将运行态请求和历史请求分离，方便完成记录被 Python 脚本或 SQL 查询读取，用于后续绘制算法对比图和统计完成时间。</p>
+    <figure class="figure diagram-frame">
+      <svg class="architecture-svg" viewBox="0 0 900 320" role="img" aria-label="请求生命周期与持久化边界图">
+        <defs>
+          <filter id="lifecycleShadow" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#172033" flood-opacity="0.13"/>
+          </filter>
+          <marker id="lifecycleArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#3d668a"/>
+          </marker>
+          <marker id="lifecycleArrowMuted" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#7c8797"/>
+          </marker>
+        </defs>
+        <rect class="zone" x="210" y="42" width="430" height="198" rx="20"/>
+        <text class="zone-label" x="425" y="70">runtime memory</text>
+        <rect class="box" x="40" y="105" width="132" height="76" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="106" y="136">用户操作</text>
+        <text class="desc" x="106" y="160">hall / cabin</text>
+        <rect class="box api" x="234" y="105" width="132" height="76" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="300" y="136">Request</text>
+        <text class="desc" x="300" y="160">pending / assigned</text>
+        <rect class="box core" x="442" y="105" width="132" height="76" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="508" y="136">StopPlan</text>
+        <text class="desc" x="508" y="160">Floor + RequestIDs</text>
+        <rect class="box runner" x="646" y="105" width="132" height="76" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="712" y="136">开门完成</text>
+        <text class="desc" x="712" y="160">completeRequest</text>
+        <rect class="box store" x="646" y="230" width="132" height="64" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="712" y="256">SQLite</text>
+        <text class="desc" x="712" y="278">done 记录</text>
+        <rect class="box" x="40" y="230" width="132" height="64" rx="14" filter="url(#lifecycleShadow)"/>
+        <text class="title" x="106" y="256">分析脚本</text>
+        <text class="desc" x="106" y="278">统计 / 图表</text>
+        <path class="flow-line" marker-end="url(#lifecycleArrow)" d="M 172 143 H 230"/>
+        <text class="edge-label" x="201" y="131">AddRequest</text>
+        <path class="flow-line" marker-end="url(#lifecycleArrow)" d="M 366 143 H 438"/>
+        <text class="edge-label" x="402" y="131">Assign</text>
+        <path class="flow-line" marker-end="url(#lifecycleArrow)" d="M 574 143 H 642"/>
+        <text class="edge-label" x="608" y="131">Step</text>
+        <path class="flow-line" marker-end="url(#lifecycleArrow)" d="M 712 181 V 226"/>
+        <text class="edge-label" x="758" y="207">Save</text>
+        <path class="flow-line muted" marker-end="url(#lifecycleArrowMuted)" d="M 646 262 H 176"/>
+        <text class="edge-label" x="415" y="250">读取 completed_requests</text>
+        <path class="flow-line muted" marker-end="url(#lifecycleArrowMuted)" d="M 645 164 C 555 226 392 229 303 181"/>
+        <text class="edge-label" x="465" y="218">从 Requests 移除</text>
+      </svg>
+      <figcaption>图 2-2 请求生命周期与持久化边界</figcaption>
+    </figure>
+
+    <h3>2.6 前端实现</h3>
+    <p>前端使用 Vue 3 构建单页应用，核心状态来自后端 <code>/api/state</code> 的轮询结果。页面主体由大楼视图、右侧控制面板和日志终端组成。大楼视图展示各电梯当前所在楼层、方向和楼层请求按钮；控制面板负责系统配置、调度算法切换、cabin 请求和紧急制动；日志终端记录用户操作与请求完成事件。</p>
+    <ul>
+      <li>楼层上/下行按钮：提交 hall 请求。</li>
+      <li>选中电梯后设置目标楼层：提交 cabin 请求。</li>
+      <li>调度算法下拉框：调用 <code>/api/scheduler</code> 切换算法。</li>
+      <li>楼层数和电梯数滑块：调用后端重启系统。</li>
+      <li>紧急制动按钮：触发指定电梯暂停固定 tick 数。</li>
+      <li>事件日志：记录请求创建、完成和配置变更。</li>
+    </ul>
+    <p>前端轮询间隔通过 <code>GET /api/config</code> 读取后端配置。系统节奏调整时只需要修改后端默认值，前端刷新节奏会随配置同步。</p>
+
+    <figure class="figure">
+      <img class="screenshot" src="../img/readme-show.png" alt="前端整体运行截图">
+      <figcaption>图 2-3 前端整体运行界面截图</figcaption>
+    </figure>
+
+    <p>整体截图展示系统的主要布局，下面两张图展示控制面板和日志终端。控制面板中的 cabin 请求区域体现了“先选中电梯，再选择目标楼层”的交互方式；紧急制动按钮对应后端的报警接口，会让指定电梯暂停固定 tick。日志终端则把请求创建、请求完成和报警触发按 tick 顺序记录下来，方便观察系统状态变化。</p>
+    <figure class="figure">
+      <img class="screenshot" src="../img/cabin-request.png" alt="轿厢内请求与紧急制动控制面板截图">
+      <figcaption>图 2-4 轿厢内请求与紧急制动控制面板</figcaption>
+    </figure>
+    <figure class="figure">
+      <img class="screenshot" src="../img/event-log.png" alt="事件日志终端截图">
+      <figcaption>图 2-5 事件日志终端显示请求与报警事件</figcaption>
+    </figure>
+
+    <h3>2.7 测试策略</h3>
+    <p>后端测试覆盖了核心模型、调度器、cost 函数、API 输入校验、系统重启、cabin 请求分配、紧急制动和 SQLite 持久化等逻辑。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>测试类型</th>
+          <th>覆盖内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>模型测试</td>
+          <td>请求创建、边界楼层、tick 推进、开门完成、请求持久化。</td>
+        </tr>
+        <tr>
+          <td>调度器测试</td>
+          <td>FCFS、SCAN、LOOK、Nearest Idle 等算法的分配结果和停靠顺序。</td>
+        </tr>
+        <tr>
+          <td>API 测试</td>
+          <td>请求创建、非法输入、配置返回、算法切换、紧急制动接口。</td>
+        </tr>
+        <tr>
+          <td>并发安全测试</td>
+          <td>使用 <code>go test -race ./...</code> 检查数据竞争。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>每次修改后端代码都会验证测试：</p>
+    <pre><code>go test ./...
+go test -race ./...</code></pre>
+
+    <h2 class="section">3. 调度算法</h2>
+    <p>调度算法是本项目最核心的部分。系统把乘客请求抽象成 <code>Request</code>，把每部电梯抽象成可执行资源，调度器负责在每个 tick 开始时从所有等待中（pending）的请求里挑选一个可行分配，并把请求转换成对应电梯的 <code>StopPlan</code>。当前系统实现了 First Available（第一可用）、FCFS（先来先服务）、Nearest Idle（最近空闲）、SCAN（扫描/电梯算法）和 LOOK（LOOK 扫描）五种调度策略。</p>
+    <h3>3.1 统一调度接口</h3>
+    <p>所有调度器都实现同一个 <code>Scheduler</code> 接口。接口只有两个方法：<code>Name()</code> 返回算法名称，<code>Assign(*System) bool</code> 执行一次分配尝试。这样 <code>System.Step()</code> 不需要知道当前使用的是哪一种具体算法，只需要调用 <code>s.scheduler.Assign(s)</code>。</p>
+    <pre><code>type Scheduler interface {
+    Name() string
+    Assign(system *System) bool
+}</code></pre>
+    <p><code>NewScheduler(name)</code> 是调度器工厂函数，根据前端传入的名称创建具体调度器。前端通过 <code>POST /api/scheduler</code> 切换算法；后端的处理方式是重建一个新的 <code>System</code>，并为新的运行周期创建独立 SQLite 数据库文件。这保证同一个数据库文件只对应一种调度算法，便于后续统计分析。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>算法名称</th>
+          <th>中文说明</th>
+          <th>前端/API 名称</th>
+          <th>实现文件</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>First Available</td>
+          <td>第一可用</td>
+          <td><code>first-available</code></td>
+          <td><code>internal/elevator/FirstAvailableScheduler.go</code></td>
+        </tr>
+        <tr>
+          <td>FCFS</td>
+          <td>先来先服务</td>
+          <td><code>fcfs</code></td>
+          <td><code>internal/elevator/FCFSScheduler.go</code></td>
+        </tr>
+        <tr>
+          <td>Nearest Idle</td>
+          <td>最近空闲电梯优先</td>
+          <td><code>nearest-idle</code></td>
+          <td><code>internal/elevator/NearestIdleScheduler.go</code></td>
+        </tr>
+        <tr>
+          <td>SCAN</td>
+          <td>扫描算法 / 电梯算法</td>
+          <td><code>scan</code></td>
+          <td><code>internal/elevator/SCANScheduler.go</code></td>
+        </tr>
+        <tr>
+          <td>LOOK</td>
+          <td>LOOK 扫描算法</td>
+          <td><code>look</code></td>
+          <td><code>internal/elevator/LOOKScheduler.go</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 简单算法</h3>
+    <p>简单算法主要用于建立调度接口、验证请求流转和作为高级算法的对照组。它们的共同特点是只处理 pending 请求中最早创建的一条请求，也就是通过 <code>firstPendingRequestID</code> 取 ID 最小的请求。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>算法</th>
+          <th>策略</th>
+          <th>优点</th>
+          <th>局限</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>First Available</td>
+          <td>只检查 1 号电梯；如果 1 号电梯空闲，就把最早请求分配给它。</td>
+          <td>实现极小，适合作为最早期可运行版本。</td>
+          <td>完全忽略其他电梯，效率和公平性都较弱。</td>
+        </tr>
+        <tr>
+          <td>FCFS</td>
+          <td>按请求创建顺序处理，把最早请求分配给第一部空闲电梯。</td>
+          <td>请求顺序清晰，先来先服务，容易解释。</td>
+          <td>不考虑距离和方向，可能让远处电梯响应近处请求。</td>
+        </tr>
+        <tr>
+          <td>Nearest Idle</td>
+          <td>取最早 pending 请求，在所有空闲电梯中选择 cost 最低的电梯。</td>
+          <td>比 FCFS 多考虑空间距离，通常能减少空闲电梯的无效移动。</td>
+          <td>只考虑空闲电梯，不能给顺路运行中的电梯追加停靠。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 SCAN 算法</h3>
+    <p>SCAN 来源于磁盘调度中的 Elevator Algorithm，核心思想是沿一个方向持续服务，当前方向上的请求处理完后再反向。把这个思想迁移到电梯场景中，每部电梯维护一个长期扫描方向 <code>ScanDirection</code>，它不同于即时运动方向 <code>Direction</code>：<code>Direction</code> 表示这一 tick 是否正在上行或下行，<code>ScanDirection</code> 表示调度器追加请求时优先判断的服务方向。</p>
+    <p>SCAN 不只让空闲电梯接单。已有停靠计划的电梯如果“顺路”，也可以追加新的 hall 请求或 cabin 请求。顺路判断由三个函数共同完成：<code>canAppendSCANRequest</code> 判断是否可追加，<code>isFloorAheadInSCAN</code> 判断请求楼层是否在扫描方向前方，<code>requestMatchesSCANDirection</code> 判断 hall 请求方向是否与扫描方向一致。</p>
+    <figure class="figure diagram-frame">
+      <svg class="mermaid-flow" viewBox="0 0 900 390" role="img" aria-label="SCAN 调度执行流程图">
+        <defs>
+          <filter id="diagramShadow" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#172033" flood-opacity="0.14"/>
+          </filter>
+          <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#406a8f"/>
+          </marker>
+          <marker id="arrowHeadMuted" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#7c8797"/>
+          </marker>
+        </defs>
+
+        <rect class="node terminal" x="42" y="42" width="170" height="78" rx="18"/>
+        <text class="label" x="127" y="75">枚举请求</text>
+        <text class="sub" x="127" y="99">pending request</text>
+
+        <polygon class="decision" points="360,35 472,82 360,129 248,82"/>
+        <text class="label" x="360" y="76">候选可行?</text>
+        <text class="sub" x="360" y="100">空闲或顺路</text>
+
+        <rect class="node" x="548" y="42" width="180" height="78" rx="14"/>
+        <text class="label" x="638" y="75">计算 cost</text>
+        <text class="sub" x="638" y="99">距离 / 掉头 / 停靠 / 等待</text>
+
+        <rect class="node" x="548" y="226" width="180" height="78" rx="14"/>
+        <text class="label" x="638" y="258">选择最优候选</text>
+        <text class="sub" x="638" y="282">Total 最低优先</text>
+
+        <rect class="node write" x="278" y="226" width="190" height="78" rx="14"/>
+        <text class="label" x="373" y="258">写入停靠计划</text>
+        <text class="sub" x="373" y="282">Request → StopPlan</text>
+
+        <rect class="node terminal" x="42" y="226" width="170" height="78" rx="18"/>
+        <text class="label" x="127" y="258">等待执行</text>
+        <text class="sub" x="127" y="282">电梯 runner 推进</text>
+
+        <rect class="node" x="278" y="143" width="190" height="54" rx="12"/>
+        <text class="label" x="373" y="176">跳过该候选</text>
+
+        <path class="arrow" d="M 212 82 H 244"/>
+        <text class="edge-label" x="230" y="70">遍历</text>
+        <path class="arrow" d="M 472 82 H 544"/>
+        <text class="edge-label" x="508" y="70">是</text>
+        <path class="arrow" d="M 638 120 V 222"/>
+        <path class="arrow" d="M 548 265 H 472"/>
+        <path class="arrow" d="M 278 265 H 216"/>
+        <path class="arrow" d="M 360 129 V 139"/>
+        <text class="edge-label" x="340" y="142">否</text>
+        <path class="loop" d="M 373 197 C 373 332 764 342 764 82 H 733"/>
+        <text class="edge-label" x="610" y="350">继续枚举 request × elevator</text>
+        <path class="loop" d="M 127 226 V 147 C 127 132 138 126 153 126 H 244"/>
+        <text class="edge-label" x="164" y="156">下个 tick</text>
+      </svg>
+      <figcaption>图 3-1 SCAN 调度执行流程</figcaption>
+    </figure>
+    <p>SCAN 的分配过程先在“请求 × 电梯”的所有可行组合中寻找候选，再选择 cost 最低的一项。找到候选后，<code>assignSCANRequest</code> 会修改请求状态、记录分配 tick 和电梯 ID，并调用 <code>insertSCANStop</code> 把请求转换成停靠计划。停靠顺序通过 <code>sortSCANStops</code> 维护：扫描方向向上时楼层升序，扫描方向向下时楼层降序，因此电梯每次只需要执行 <code>Stops[0]</code>。</p>
+    <pre><code>best = none
+for request in pendingRequests:
+    for elevator in elevators:
+        if elevator is idle or request is on the scan path:
+            score = EstimateAssignmentScore(system, elevator, request)
+            best = lowerCost(best, request, elevator, score)
+assign best request to best elevator</code></pre>
+    <p>举例来说，如果一部电梯当前在 6 楼，<code>ScanDirection</code> 为 up，已有 10 楼停靠，此时 8 楼上行请求可以被追加，因为它位于当前楼层前方且方向一致；但 8 楼下行请求不会被追加，因为乘客希望下行，和这部电梯当前扫描方向不一致。这样可以避免电梯为了接一个反向请求破坏已有服务顺序。</p>
+
+    <h3>3.4 LOOK 算法</h3>
+    <p>LOOK 是 SCAN 的改进版本。传统 SCAN 会沿当前方向一直走到物理边界再反向；LOOK 则“向前看”，只要当前方向前方已经没有停靠计划，就可以提前反向，不需要空跑到顶楼或底楼。现实电梯通常也更接近 LOOK：如果上方已经没有乘客请求，就没有必要为了算法形式继续上行。</p>
+    <p>本项目中的 LOOK 复用了 SCAN 的大部分候选选择逻辑，但在判断候选前增加了 <code>prepareLOOKDirection</code>。该函数会检查当前扫描方向前方是否还有 stop；如果没有，而反方向还有 stop，就立即切换 <code>ScanDirection</code>。随后 <code>canAppendLOOKRequest</code> 再按更新后的方向判断新请求是否顺路。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>对比项</th>
+          <th>SCAN</th>
+          <th>LOOK</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>方向保持</td>
+          <td>沿扫描方向持续服务。</td>
+          <td>沿扫描方向服务，但会检查前方是否还有实际停靠。</td>
+        </tr>
+        <tr>
+          <td>反向条件</td>
+          <td>更接近到达边界后反向的传统电梯算法思想。</td>
+          <td>当前方向无后续停靠时提前反向。</td>
+        </tr>
+        <tr>
+          <td>实现重点</td>
+          <td><code>canAppendSCANRequest</code> 和 <code>sortSCANStops</code>。</td>
+          <td><code>prepareLOOKDirection</code> 和 <code>hasLOOKStopAhead</code>。</td>
+        </tr>
+        <tr>
+          <td>适用场景</td>
+          <td>适合解释经典扫描思想。</td>
+          <td>更贴近真实电梯，减少没有必要的方向保持。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.5 cost 函数</h3>
+    <p>高级调度器需要在多个“请求-电梯”候选之间比较优劣，因此项目中抽出了统一的评分结构 <code>AssignmentScore</code>。当前 cost 公式为：<code>Total = DistanceCost + TurnPenalty + StopPenalty - WaitCompensation</code>。总分越低，候选越优；如果总分相同，则选择请求更早、电梯编号更小的候选，保证结果稳定并便于测试。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>评分项</th>
+          <th>计算方式</th>
+          <th>设计意图</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>DistanceCost</code></td>
+          <td><code>|currentFloor - requestFloor| * TicksPerFloor</code></td>
+          <td>楼层距离越远，响应成本越高。</td>
+        </tr>
+        <tr>
+          <td><code>TurnPenalty</code></td>
+          <td>如果需要掉头，增加 20。</td>
+          <td>避免频繁改变方向，保护已有服务顺序。</td>
+        </tr>
+        <tr>
+          <td><code>StopPenalty</code></td>
+          <td>已有每个 stop 增加 10。</td>
+          <td>已有任务越多的电梯越忙，不应无限追加。</td>
+        </tr>
+        <tr>
+          <td><code>WaitCompensation</code></td>
+          <td><code>CurrentTick - CreatedTick</code></td>
+          <td>等待越久的请求获得补偿，降低长期饥饿风险。</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>cost 函数不单独属于某个算法，而是调度器比较候选时的共同工具。Nearest Idle 使用它在空闲电梯之间做选择；SCAN 和 LOOK 使用它在“所有 pending 请求 × 所有可行电梯”的组合中做选择。这样调度策略和评分维度分开，后续如果要加入容量、能耗或更复杂的等待惩罚，也可以集中修改评分函数。</p>
+
+    <h3>3.6 算法对比</h3>
+    <p>在 20 层、5 部电梯的配置下，分别切换到五种调度器，并提交完全相同的 101 个请求负载；负载覆盖低层大量上行、高层下行、中层双向混合、同层多请求和 cabin 请求。每种算法的完成请求写入独立 SQLite 数据库，图表和汇总结果如下：</p>
+    <table>
+      <thead>
+        <tr>
+          <th>调度器</th>
+          <th>完成请求数</th>
+          <th>平均等待 tick</th>
+          <th>等待 P95</th>
+          <th>平均总耗时 tick</th>
+          <th>总耗时第 95 百分位数</th>
+          <th>最大总耗时</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>FCFS</td>
+          <td>101</td>
+          <td>128.9</td>
+          <td>270.0</td>
+          <td>148.3</td>
+          <td>282.0</td>
+          <td>294</td>
+        </tr>
+        <tr>
+          <td>First Available</td>
+          <td>101</td>
+          <td>282.7</td>
+          <td>639.0</td>
+          <td>296.1</td>
+          <td>647.0</td>
+          <td>676</td>
+        </tr>
+        <tr>
+          <td>LOOK</td>
+          <td>101</td>
+          <td>37.9</td>
+          <td>115.0</td>
+          <td>69.8</td>
+          <td>163.0</td>
+          <td>185</td>
+        </tr>
+        <tr>
+          <td>Nearest Idle</td>
+          <td>101</td>
+          <td>130.9</td>
+          <td>273.0</td>
+          <td>150.1</td>
+          <td>284.0</td>
+          <td>293</td>
+        </tr>
+        <tr>
+          <td>SCAN</td>
+          <td>101</td>
+          <td>37.9</td>
+          <td>115.0</td>
+          <td>69.8</td>
+          <td>163.0</td>
+          <td>185</td>
+        </tr>
+      </tbody>
+    </table>
+    <figure class="figure">
+      <img class="chart-image" src="../analysis/compare_bar.png" alt="五种调度算法平均等待、平均总耗时和第 95 百分位数指标对比图">
+      <figcaption>图 3-2 五种调度算法的平均耗时与第 95 百分位数耗时对比</figcaption>
+    </figure>
+    <p>从完成请求数看，五种算法都完成了 101 个请求，因此本组数据具备横向比较基础。First Available 的平均等待达到 282.7 tick，P95 等待达到 639.0 tick，是本组实验中表现最差的策略；原因在于它只选择编号靠前的可用电梯，不考虑距离、方向和已有任务分布，容易造成负载不均衡。FCFS 和 Nearest Idle 的平均等待分别为 128.9 和 130.9 tick，明显好于 First Available，但二者仍主要围绕“空闲电梯接单”展开，对运行中电梯的顺路追加利用不足，因此在高并发请求下仍会出现较长等待队列。</p>
+    <p>SCAN 和 LOOK 的表现明显更好，平均等待均为 37.9 tick，平均总耗时均为 69.8 tick；相对于 FCFS，平均等待降低约 70.6%，平均总耗时降低约 52.9%。这说明“沿方向连续服务、允许运行中电梯追加顺路请求”的设计更适合本项目的混合请求负载。它减少了电梯频繁掉头和空闲等待，也能把同方向、同楼层附近的请求聚合到同一条运行路径上处理。</p>
+    <p>本组数据中 SCAN 与 LOOK 指标完全相同，说明当前请求序列没有明显触发二者在“是否空跑到边界再反向”上的差异。报告中的算法选择仍保留 LOOK 的设计意义：在更稀疏或更偏向局部楼层的请求负载下，LOOK 可以在当前方向没有后续请求时提前反向，理论上比传统 SCAN 更少无效移动；而 SCAN 更适合作为经典电梯算法的基准实现。</p>
+
+    <h2 class="section">4. Go 并发模型</h2>
+
+    <p>为了匹配“每部电梯作为独立执行单元”的要求，在单线程同步模拟的基础上，继续使用 Go 的 goroutine、channel、select、context 和 mutex 构建并发运行模型。并发模型的目标是让系统结构更接近真实场景：HTTP 请求随时到达，后端 ticker 自动推进时间，每部电梯独立计算自己的下一步状态。</p>
+
+    <h3>4.1 为什么需要并发</h3>
+    <p>现实中的多部电梯可以同时运行，如果后端只采用单线程模拟的方式，无法体现“每部电梯独立执行”的要求以及现实电梯并发执行的特性。当前系统运行时包含三类 goroutine：<code>net/http</code> 为每个请求创建的 handler goroutine、自动 ticker goroutine、以及每部电梯对应的 runner goroutine。默认 5 部电梯时，系统启动后会有 5 个电梯 runner、1 个自动 tick goroutine 和若干 HTTP 请求 goroutine。</p>
+    <figure class="figure diagram-frame">
+      <svg class="mermaid-flow" viewBox="0 0 900 250" role="img" aria-label="系统启动后的 goroutine 结构图">
+        <defs>
+          <filter id="startupShadow" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#172033" flood-opacity="0.14"/>
+          </filter>
+          <marker id="startupArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#406a8f"/>
+          </marker>
+        </defs>
+        <rect class="node terminal" x="46" y="70" width="160" height="78" rx="18" filter="url(#startupShadow)"/>
+        <text class="label" x="126" y="102">NewSystem</text>
+        <text class="sub" x="126" y="126">创建共享状态</text>
+        <rect class="node" x="282" y="70" width="178" height="78" rx="14" filter="url(#startupShadow)"/>
+        <text class="label" x="371" y="102">Elevator Runners</text>
+        <text class="sub" x="371" y="126">每部电梯一个 goroutine</text>
+        <rect class="node write" x="538" y="70" width="150" height="78" rx="14" filter="url(#startupShadow)"/>
+        <text class="label" x="613" y="102">Auto Step</text>
+        <text class="sub" x="613" y="126">250ms ticker</text>
+        <rect class="node terminal" x="748" y="70" width="126" height="78" rx="18" filter="url(#startupShadow)"/>
+        <text class="label" x="811" y="102">HTTP</text>
+        <text class="sub" x="811" y="126">请求 goroutine</text>
+        <path class="arrow" marker-end="url(#startupArrow)" d="M 206 109 H 278"/>
+        <path class="arrow" marker-end="url(#startupArrow)" d="M 460 109 H 534"/>
+        <path class="arrow" marker-end="url(#startupArrow)" d="M 688 109 H 744"/>
+        <text class="edge-label" x="242" y="94">启动</text>
+        <text class="edge-label" x="499" y="94">驱动 tick</text>
+        <text class="edge-label" x="718" y="94">提供 API</text>
+      </svg>
+      <figcaption>图 4-1 系统启动后的并发执行单元</figcaption>
+    </figure>
+
+    <h3>4.2 Go 并发基础</h3>
+    <p>Go 的并发模型可以简单理解为：用 goroutine 表达并发执行，用 channel 表达 goroutine 之间的消息传递，用 mutex 保护必须共享的数据，用 context 结束后台任务。分别适合不同的应用场景。</p>
+    <h4>4.2.1 goroutine 与线程</h4>
+    <p>goroutine 由 Go 运行时调度。操作系统线程由内核调度，而 Go 运行时会把大量 goroutine 映射到较少的 OS 线程上运行，因而创建成本比操作系统线程低得多，适合把“每部电梯”“后台 ticker”“HTTP 请求处理”都表达成独立执行单元。因此在本项目中，启动 5 个电梯 goroutine 只是创建 5 个轻量任务。</p>
+    <h4>4.2.2 channel 与通信式并发</h4>
+    <p>channel 可以理解成 goroutine 之间传递消息的管道。一个 goroutine 通过 <code>ch &lt;- value</code> 把数据发送到 channel，另一个 goroutine 通过 <code>value := &lt;-ch</code> 接收数据；如果发送方或接收方暂时没有对应对象，它通常会阻塞等待。这个阻塞特性很重要，因为它天然形成同步点：发送 tick 命令后，电梯 runner 一定会在收到命令后才开始计算；Step 等待结果时，也一定会在 runner 算完后才继续合并状态。</p>
+    <p>Go 社区常用一句话概括 channel 的设计思想：不要通过共享内存来通信，而要通过通信来共享内存。它强调的是先明确数据流向，再让 goroutine 通过消息交接状态，而不是让多个 goroutine 同时读写同一份共享对象。本项目中 <code>Step</code> 向每部电梯 runner 发送 <code>elevatorTickCommand</code>，runner 返回 <code>elevatorTickResult</code>，这就是典型的消息传递模型。</p>
+    <p>因为 Step 与 runner 之间存在清晰的生产者和消费者关系：Step 生产一个 tick 命令，runner 消费命令并生产一个结果，因而采用 channel 来传递数据是清晰的。相比让 runner 直接修改共享的 <code>System</code>，channel 让数据所有权更明确：runner 拿到的是某部电梯的状态副本，返回的是新状态和完成请求 ID，真正写回共享系统仍由 Step 统一完成。</p>
+    <h4>4.2.3 互斥锁与共享状态</h4>
+    <p>channel 不能替代所有同步需求。<code>System</code> 中的 <code>Elevators</code>、<code>Requests</code>、<code>CurrentTick</code> 是全局共享状态，HTTP handler 和自动 tick 都可能访问它们，因此必须用 <code>sync.Mutex</code> 保护。也就是说，本项目使用 channel 处理“Step 与电梯 runner 的局部通信”，使用 mutex 保护“系统全局状态”。</p>
+    <p>这种组合比“全用锁”或“全用 channel”更贴合当前项目：电梯 runner 的输入输出边界很清楚，适合 channel；系统状态被 API、调度器和 Step 共同访问，适合 mutex。选择同步工具时，应当明确数据所有权和边界，从而选用恰当的方式。</p>
+    <h4>4.2.4 select 与 context</h4>
+    <p><code>select</code> 是 Go 对多个 channel 同时等待的语法。普通接收语句只能等待一个 channel，例如只等 tick 命令；但电梯 runner 既要能接收下一次 tick，也要能在系统关闭时及时退出，所以需要同时等待多个事件。<code>select</code> 会在多个 case 中选择一个已经就绪的分支执行：如果收到 <code>elevatorTickCommand</code>，runner 就计算电梯下一状态；如果 <code>ctx.Done()</code> 先就绪，runner 就结束循环并退出。</p>
+    <p><code>context</code> 可以理解成后台任务的生命周期控制器。创建系统时会生成一个 context，启动的电梯 runner 都持有它；系统重启或关闭时调用取消函数，<code>ctx.Done()</code> 对应的 channel 就会被关闭，所有 runner 都能收到退出信号。它解决的是“后台 goroutine 什么时候结束”的问题：没有 context 时，旧 runner 可能一直阻塞在 command channel 上，即使系统已经重建也不会自动消失。</p>
+    <p>因此，本项目中 <code>select</code> 和 <code>context</code> 是配套出现的：<code>select</code> 让 runner 能同时响应“继续工作”和“退出”两种事件，<code>context</code> 提供统一的退出信号。这样既能保持每部电梯独立运行，又能保证重启系统时不会留下无主的后台任务。</p>
+
+    <h3>4.3 本项目的并发设计</h3>
+    <p>本项目的并发设计如下：<code>System</code> 保存共享状态和两把锁；每部电梯 runner 通过 command channel 接收状态副本；runner 计算完成后通过 result channel 回传结果；最终仍由 <code>Step</code> 统一合并状态。设计上不允许多个 goroutine 同时随意修改同一份 <code>System</code>，而是把共享状态修改集中在一个合并点。</p>
+    <pre><code>type System struct {
+    mu     sync.Mutex   // 保护 Elevators、Requests、CurrentTick 等共享状态
+    stepMu sync.Mutex   // 保证两个 Step 不会交错
+
+    Elevators []Elevator
+    Requests  map[int64]*Request
+
+    elevatorCommands []chan elevatorTickCommand
+}
+
+type elevatorTickCommand struct {
+    elevator Elevator   // 电梯状态副本
+    done chan elevatorTickResult
+}
+
+type elevatorTickResult struct {
+    elevator Elevator
+    completedRequestIDs []int64
+}</code></pre>
+    <p>这段结构的核心目标很简单：每部电梯可以并行计算，但共享状态只能在受控位置修改。下面按一次 tick 的执行过程说明各部分职责。</p>
+    <p>第一步是调度和复制。<code>Step()</code> 先拿到 <code>stepMu</code>，保证不会出现两个 tick 同时推进；随后拿 <code>mu</code>，让调度器在一致的系统状态上分配 pending 请求。调度结束后，Step 会复制 channel 列表、深拷贝所有电梯状态，并读取本 tick 所需的只读配置。完成这些准备后释放 <code>mu</code>，避免后续等待 runner 期间长时间阻塞 API。</p>
+    <p>第二步是分发和并行计算。Step 把每部电梯的状态副本封装成 <code>elevatorTickCommand</code>，通过对应的 command channel 发给 runner。runner 收到命令后只调用 <code>stepElevatorState</code> 计算这一部电梯的下一状态，不读取也不写入 <code>System</code>。计算结束后，runner 通过 result channel 返回新电梯状态和本 tick 完成的请求 ID。</p>
+    <p>第三步是统一合并。Step 收齐所有 runner 的结果后重新拿 <code>mu</code>，把新电梯状态写回 <code>s.Elevators</code>，调用 <code>completeRequest</code> 完成请求、写入 SQLite 并从运行态请求表删除，最后递增 <code>CurrentTick</code>。这一阶段集中处理共享状态写入，因此不会出现多个 runner 同时修改同一份系统状态的问题。</p>
+    <figure class="figure diagram-frame">
+      <svg class="mermaid-flow" viewBox="0 0 900 430" role="img" aria-label="并发 tick 执行流程图">
+        <defs>
+          <filter id="tickShadow" x="-20%" y="-30%" width="140%" height="170%">
+            <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#172033" flood-opacity="0.14"/>
+          </filter>
+          <marker id="tickArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+            <path d="M 1 1 L 11 6 L 1 11 z" fill="#406a8f"/>
+          </marker>
+        </defs>
+        <rect class="node terminal" x="48" y="48" width="168" height="76" rx="18" filter="url(#tickShadow)"/>
+        <text class="label" x="132" y="80">ticker 触发</text>
+        <text class="sub" x="132" y="103">调用 System.Step()</text>
+        <rect class="node" x="286" y="48" width="190" height="76" rx="14" filter="url(#tickShadow)"/>
+        <text class="label" x="381" y="80">调度与复制</text>
+        <text class="sub" x="381" y="103">持有 mu，cloneElevator</text>
+        <rect class="node" x="548" y="48" width="190" height="76" rx="14" filter="url(#tickShadow)"/>
+        <text class="label" x="643" y="80">释放 mu</text>
+        <text class="sub" x="643" y="103">API 可并发读写</text>
+        <rect class="node write" x="548" y="182" width="190" height="76" rx="14" filter="url(#tickShadow)"/>
+        <text class="label" x="643" y="214">分发命令</text>
+        <text class="sub" x="643" y="237">command channel</text>
+        <rect class="node" x="286" y="182" width="190" height="76" rx="14" filter="url(#tickShadow)"/>
+        <text class="label" x="381" y="214">电梯 runner</text>
+        <text class="sub" x="381" y="237">并行计算状态副本</text>
+        <rect class="node write" x="48" y="182" width="168" height="76" rx="14" filter="url(#tickShadow)"/>
+        <text class="label" x="132" y="214">回传结果</text>
+        <text class="sub" x="132" y="237">result channel</text>
+        <rect class="node terminal" x="286" y="318" width="190" height="76" rx="18" filter="url(#tickShadow)"/>
+        <text class="label" x="381" y="350">合并 tick</text>
+        <text class="sub" x="381" y="373">重新持有 mu，tick++</text>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 216 86 H 282"/>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 476 86 H 544"/>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 643 124 V 178"/>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 548 220 H 480"/>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 286 220 H 220"/>
+        <path class="arrow" marker-end="url(#tickArrow)" d="M 132 258 C 132 330 214 356 282 356"/>
+        <path class="loop" marker-end="url(#tickArrow)" d="M 476 356 C 790 356 808 86 742 86"/>
+        <text class="edge-label" x="625" y="352">下一次 tick</text>
+      </svg>
+      <figcaption>图 4-2 一个 tick 的并发执行流程</figcaption>
+    </figure>
+    <p>电梯 runner 不直接写 <code>System</code>，其只接收 <code>elevatorTickCommand</code> 中携带的电梯状态副本，调用 <code>stepElevatorState</code> 计算新状态，再通过 <code>elevatorTickResult</code> 回传。共享状态的写回统一由 <code>stepWithElevatorRunners</code> 在锁内完成，这样可以把“并行计算”和“共享状态修改”分离。</p>
+    <p>这里有一个容易出错的 Go 细节：切片赋值只复制切片头，不复制底层数组。<code>Elevator.Stops</code> 是切片，<code>StopPlan.RequestIDs</code> 也是切片；如果直接把电梯结构传给 runner，副本和原对象可能共享底层数组，导致并发读写同一片内存。因此分发前需要深拷贝：</p>
+    <pre><code>func cloneElevator(e Elevator) Elevator {
+    e.Stops = append([]StopPlan(nil), e.Stops...)
+    for i := range e.Stops {
+        e.Stops[i].RequestIDs = append([]int64(nil), e.Stops[i].RequestIDs...)
+    }
+    return e
+}</code></pre>
+    <p>API handler 的并发边界也属于这套设计的一部分：<code>GET /api/state</code> 最终调用 <code>Snapshot()</code>，<code>POST /api/request</code> 最终调用 <code>AddRequest()</code>。这些方法内部会持有 <code>mu</code>，读取到的状态不会有误，写入请求时也不会和 Step 的合并阶段冲突。当 Step 释放 <code>mu</code> 等待电梯 runner 计算时，新的乘梯请求可以进入系统，并在后续 tick 被调度。</p>
+
+    <h3>4.4 数据竞争与 go test -race</h3>
+    <p>数据竞争是指两个 goroutine 同时访问同一块内存，至少一个是写操作，并且没有同步保护。并发代码即使功能测试通过，也可能因为数据竞争在高频运行时出现偶发错误。Go 提供了 race detector，可以通过 <code>go test -race ./...</code> 检查测试执行期间的共享内存访问是否安全。</p>
+    <p>race detector 的基本原理是在编译和运行测试时插入额外的内存访问监测逻辑。程序运行过程中，它会记录不同 goroutine 对共享变量的读写行为，并结合同步事件判断这些访问之间是否存在可靠的先后关系。如果两个访问没有被 mutex、channel、原子操作等同步手段建立顺序，而且其中至少一个是写操作，就会报告 data race。它不是静态语法检查，而是运行时检测，所以测试必须覆盖到相关并发路径才有意义。</p>
+    <p>本项目并发安全的核心原则可以概括为四点：<code>mu</code> 保护共享数据，<code>stepMu</code> 保证 tick 不交错；电梯 runner 只处理状态副本，不直接写 <code>System</code>；Step 中间释放 <code>mu</code> 以允许 API 并发访问；所有后台 goroutine 都通过 context 控制生命周期。当前报告中列出的验证命令包括 <code>go test ./...</code> 和 <code>go test -race ./...</code>。</p>
+
+    <h2 class="section">5. 总结</h2>
+
+    <p>本项目完成了一个可运行、可观察、可扩展的电梯调度算法可视化系统。后端使用 Go 标准库实现 HTTP API，使用统一的 <code>System</code> 模型维护电梯、请求、停靠计划和全局 tick；调度层实现了 First Available、FCFS、Nearest Idle、SCAN 和 LOOK；并发层用每部电梯一个 goroutine 的方式体现独立执行单元；前端使用 Vue 3 + Element Plus + Vite 展示楼层、电梯、控制面板和日志；持久化层使用 SQLite 保存完成请求，为算法实验提供数据来源。</p>
+    <p>从操作系统学习角度看，本项目把多个课程概念连接在了一起：调度算法对应请求分配策略，goroutine 和 channel 对应并发执行与通信，mutex 和 race detector 对应共享状态保护，HTTP API 和前端轮询对应系统状态的可视化观察。通过先实现同步模型、再逐步加入调度器、持久化、前端和并发模型，可以更清楚地看到工程复杂度是如何一步步产生的。</p>
+    <p>后续可改进方向主要包括三点：第一，扩展更多算法实验负载，例如午间双向流动、稀疏随机请求和突发高峰请求，并进行多轮重复实验；第二，继续完善乘客容量、上下客耗时和楼层客流模型，让模拟更接近真实电梯；第三，增强前端展示，例如增加算法轨迹回放、请求等待时间标注和历史统计面板。</p>
+
+    <h2 class="section">附录</h2>
+
+    <h3>附录 A：API 文档</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>方法</th>
+          <th>路径</th>
+          <th>请求体</th>
+          <th>说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/health</td>
+          <td>无</td>
+          <td>健康检查，返回 <code>{"status":"ok"}</code>。</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/config</td>
+          <td>无</td>
+          <td>返回前端轮询间隔、移动耗时、开门耗时和紧急制动 tick 数。</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td class="route">/api/state</td>
+          <td>无</td>
+          <td>返回系统快照，包括电梯、请求、当前 tick、楼层数和调度器名称。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/request</td>
+          <td><code>{"floor":6,"direction":"up","kind":"hall"}</code></td>
+          <td>创建楼层外部请求；cabin 请求还需要 <code>elevatorId</code>。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/scheduler</td>
+          <td><code>{"name":"scan"}</code></td>
+          <td>切换调度算法并重建系统运行周期。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/floor-count</td>
+          <td><code>{"floorCount":20}</code></td>
+          <td>调整楼层数并重启系统，合法范围为 2 到 40。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/elevator-count</td>
+          <td><code>{"elevatorCount":5}</code></td>
+          <td>调整电梯数并重启系统，合法范围为 1 到 10。</td>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td class="route">/api/elevator-emergency</td>
+          <td><code>{"elevatorId":4}</code></td>
+          <td>触发指定电梯紧急制动，暂停固定 tick 后自动恢复。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>附录 B：项目运行指南</h3>
+    <h4>Docker Compose 启动</h4>
+    <pre><code>docker compose up</code></pre>
+    <p>启动成功后访问 <code>http://localhost:5173</code>，后端 API 位于 <code>http://localhost:8080</code>。健康检查命令如下：</p>
+    <pre><code>curl http://localhost:8080/api/health</code></pre>
+    <h4>本机开发启动</h4>
+    <pre><code># 终端 1：启动后端
+go run ./cmd/server
+
+# 终端 2：启动前端
+cd web
+npm install
+npm run dev</code></pre>
+    <h4>测试命令</h4>
+    <pre><code>go test ./...
+go test -race ./...
+
+cd web
+npm run build</code></pre>
+
+    <h3>附录 C：项目目录结构</h3>
+    <pre><code>os_sp26_proj1/
+├── cmd/server/          # Go 服务入口
+├── internal/api/        # HTTP API handler 与自动步进逻辑
+├── internal/elevator/   # 电梯模型、调度算法、并发运行、SQLite 持久化
+├── web/                 # Vue 3 + Element Plus + Vite 前端
+├── docs/                # 需求、计划、记录和最终报告
+├── analysis/            # 调度实验与图表输出
+├── scripts/             # 本地分析脚本
+├── data/                # 运行时生成的 SQLite 数据库
+├── img/                 # README 和报告使用的图片资源
+└── docker-compose.yml   # Docker Compose 启动配置</code></pre>
+
+    <div class="note">截至本报告当前版本，HTML 内容已完成项目概述、系统设计与实现、调度算法、Go 并发模型、总结和附录。算法对比实验已根据 <code>analysis/</code> 下的统计结果和图表补充。</div>
+  </main>
+</body>
+</html>

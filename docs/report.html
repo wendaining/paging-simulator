@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>请求调页存储管理方式模拟程序设计报告</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #596579;
+      --line: #d9e0ea;
+      --paper: #ffffff;
+      --soft: #f5f7fb;
+      --accent: #1f5f99;
+      --accent-soft: #eaf3ff;
+      --green: #0f766e;
+      --orange: #c2410c;
+      --violet: #6d28d9;
+      --code: #101827;
+      --font-song: "Times New Roman", "SimSun", "Songti SC", serif;
+      --font-hei: "Times New Roman", "SimHei", "Heiti SC", sans-serif;
+      --font-mono: "Times New Roman", "SimSun", "Songti SC", serif;
+      --size-sihao: 14pt;
+      --size-wuhao: 10.5pt;
+      --line-report: 18pt;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef2f7;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 40px));
+      margin: 28px auto;
+      padding: 56px 64px 72px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(23, 32, 51, 0.08);
+    }
+
+    .cover {
+      padding-bottom: 34px;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .cover .school {
+      color: var(--muted);
+      font-size: var(--size-wuhao);
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-hei);
+      font-size: 18pt;
+      line-height: 24pt;
+      letter-spacing: 0.02em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      color: var(--muted);
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 36px;
+      width: min(720px, 100%);
+      margin: 34px auto 0;
+      text-align: left;
+      font-size: var(--size-wuhao);
+    }
+
+    .meta div {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+
+    .meta strong {
+      display: inline-block;
+      min-width: 88px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .abstract {
+      margin: 28px 0;
+      padding: 18px 22px;
+      background: var(--soft);
+      border-left: 4px solid var(--accent);
+    }
+
+    .abstract h2,
+    .toc h2 {
+      margin: 0 0 8px;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    .keywords {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .toc {
+      margin: 28px 0 38px;
+      padding: 18px 22px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 24px;
+    }
+
+    h2.section {
+      margin: 9pt 0;
+      padding: var(--line-report) 0 0;
+      border-bottom: none;
+      font-family: var(--font-hei);
+      font-size: var(--size-sihao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-align: center;
+      break-before: page;
+      page-break-before: always;
+    }
+
+    h3 {
+      margin: 9pt 0;
+      font-family: var(--font-hei);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      font-weight: 700;
+      text-align: left;
+    }
+
+    p {
+      margin: 0;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 0 2em;
+      padding-left: 26px;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    li {
+      margin: 0;
+      text-align: justify;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #0f172a;
+      background: #eef2f7;
+      font-family: var(--font-mono);
+      font-size: var(--size-wuhao);
+    }
+
+    pre {
+      margin: 14px 0;
+      padding: 16px 18px;
+      overflow: auto;
+      color: #dbeafe;
+      background: var(--code);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px 11px;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--soft);
+      text-align: left;
+      font-weight: 700;
+      font-family: var(--font-hei);
+    }
+
+    .figure {
+      margin: 18px 0 22px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .diagram-frame {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      background:
+        linear-gradient(135deg, rgba(31, 95, 153, 0.08), rgba(255, 255, 255, 0) 42%),
+        radial-gradient(circle at 88% 18%, rgba(15, 118, 110, 0.10), transparent 28%),
+        #fbfcfe;
+    }
+
+    .figure figcaption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: var(--font-song);
+      font-size: var(--size-wuhao);
+      line-height: var(--line-report);
+      text-align: center;
+    }
+
+    .svg-diagram {
+      display: block;
+      width: 100%;
+      height: auto;
+      font-family: var(--font-song);
+    }
+
+    .svg-diagram .box {
+      fill: rgba(255, 255, 255, 0.96);
+      stroke: #8db8df;
+      stroke-width: 1.5;
+      filter: url(#shadow);
+    }
+
+    .svg-diagram .box.green {
+      stroke: var(--green);
+      fill: #eef7f5;
+    }
+
+    .svg-diagram .box.orange {
+      stroke: var(--orange);
+      fill: #fff7ed;
+    }
+
+    .svg-diagram .box.violet {
+      stroke: var(--violet);
+      fill: #f5f3ff;
+    }
+
+    .svg-diagram .box.gray {
+      stroke: #64748b;
+      fill: #f8fafc;
+    }
+
+    .svg-diagram .arrow,
+    .svg-diagram .line {
+      fill: none;
+      stroke: #406a8f;
+      stroke-width: 2.1;
+      marker-end: url(#arrowHead);
+    }
+
+    .svg-diagram .muted-line {
+      fill: none;
+      stroke: #7c8797;
+      stroke-width: 1.8;
+      stroke-dasharray: 6 5;
+      marker-end: url(#arrowHeadMuted);
+    }
+
+    .svg-diagram .title {
+      fill: var(--ink);
+      font-family: var(--font-hei);
+      font-size: 15px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .svg-diagram .desc {
+      fill: var(--muted);
+      font-family: var(--font-song);
+      font-size: 13px;
+      text-anchor: middle;
+    }
+
+    .svg-diagram .tiny {
+      fill: var(--muted);
+      font-size: 12px;
+      text-anchor: middle;
+    }
+
+    .note {
+      margin: 12px 0 16px;
+      padding: 12px 16px;
+      color: #334155;
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+    }
+
+    .note p {
+      text-indent: 0;
+    }
+
+    .formula {
+      margin: 10px 0 16px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      font-family: var(--font-hei);
+      text-align: center;
+    }
+
+    .appendix-list {
+      margin-left: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .appendix-list li {
+      margin-bottom: 8px;
+      padding-left: 0;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: auto;
+        margin: 0;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+      }
+
+      .figure {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: calc(100% - 20px);
+        padding: 32px 22px 44px;
+      }
+
+      .meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <div class="school">操作系统课程设计 / 综合实践</div>
+      <h1>请求调页存储管理方式模拟程序设计报告</h1>
+      <div class="subtitle">基于 TypeScript、Express、Vue 和 Electron 的页面置换算法模拟系统</div>
+      <div class="meta">
+        <div><strong>项目类型</strong>操作系统课程设计</div>
+        <div><strong>核心内容</strong>请求调页、地址转换、缺页中断</div>
+        <div><strong>技术栈</strong>TypeScript、Node.js、Express、Vue 3</div>
+        <div><strong>算法支持</strong>FIFO、LRU、CLOCK</div>
+        <div><strong>测试工具</strong>Vitest、curl、运行日志</div>
+        <div><strong>客户端</strong>Element Plus、Electron</div>
+      </div>
+    </section>
+
+    <section class="abstract">
+      <h2>摘要</h2>
+      <p>本项目实现了一个请求调页存储管理方式模拟程序，用于模拟作业在虚拟存储请求调页系统中的执行过程。课程设定为 320 条指令、32 页地址空间、每页 10 条指令、主存 4 个内存块，初始状态下所有页面均未调入内存。系统按照顺序执行、前地址部分随机跳转、后地址部分随机跳转相结合的规则生成访问序列，并在每一步执行中完成页号计算、页内偏移计算、内存命中判断、缺页中断处理、页面装入、页面置换和缺页率统计。</p>
+      <p>系统结构上将前端展示、后端接口、核心模拟流程和页面置换算法分层实现。核心模拟器只负责通用请求调页流程，FIFO、LRU、CLOCK 三种页面置换算法分别以独立模块实现，并通过统一接口接入模拟器。前端用于展示算法选择、课程参数、内存块状态、页表状态、换页过程和完整模拟记录；后端提供可通过 curl 验证的 HTTP API；测试部分使用 Vitest 覆盖访问序列、地址转换、模拟流程和算法行为。</p>
+      <div class="keywords">关键词：请求调页；页表；地址转换；缺页中断；FIFO；LRU；CLOCK；页面置换</div>
+    </section>
+
+    <nav class="toc">
+      <h2>目录</h2>
+      <ol>
+        <li>项目概述</li>
+        <li>系统设计结构与技术栈</li>
+        <li>指令访问序列与地址转换</li>
+        <li>页面置换算法设计</li>
+        <li>测试与结果验证</li>
+        <li>总结</li>
+        <li>附录</li>
+      </ol>
+    </nav>
+
+    <h2 class="section">1. 项目概述</h2>
+    <h3>1.1 项目背景</h3>
+    <p>请求调页是虚拟内存管理中的重要机制。程序运行时，并不要求所有页面一次性装入主存，而是在访问到某个页面时才判断该页是否已经存在于内存。若访问页已经在内存中，则可以完成地址转换并继续执行；若访问页不在内存中，则产生缺页中断，由系统把所需页面调入内存。当内存块已经占满时，还需要按照页面置换算法选择一个页面换出。</p>
+    <p>本项目通过模拟一个包含 320 条指令的作业执行过程，把页面、页表、逻辑地址、物理地址、缺页中断和页面置换算法等概念联系起来。程序不仅给出最终缺页率，还记录每一步的命中或缺页状态，使请求调页过程可以被逐步观察和验证。</p>
+
+    <h3>1.2 任务</h3>
+    <p>任务设定为：作业共有 320 条指令，地址空间划分为 32 页，每页可存放 10 条指令；主存最多同时装入 4 个页面，初始状态下所有页面均未调入内存。执行过程中，访问指令命中内存时显示物理地址并继续下一条指令；访问指令未命中内存时记录缺页次数并调入页面；若 4 个内存块已满，则执行页面置换。全部 320 条指令执行完成后，系统计算并显示缺页率。</p>
+
+    <h3>1.3 项目目标</h3>
+    <p>项目目标包括：生成符合课程比例要求的指令访问序列；根据指令号计算页号和页内偏移；根据内存块号和页内偏移计算物理地址；维护当前内存块状态、缺页次数和每一步执行记录；实现 FIFO、LRU、CLOCK 三种页面置换算法，并允许通过接口和前端界面切换算法。</p>
+
+    <h3>1.4 报告重点</h3>
+    <p>本报告重点说明系统设计结构、请求调页模拟流程、分页地址转换和页面置换算法。API、curl 验证、日志、参数校验、前端界面和 Electron 打包属于工程支撑内容，在后文作为辅助说明呈现。</p>
+
+    <h2 class="section">2. 系统设计结构与技术栈</h2>
+    <h3>2.1 总体架构</h3>
+    <p>系统由前端展示层、后端接口层、核心模拟层、页面置换算法层、类型与配置层组成。前端展示层负责算法选择、seed 输入、课程参数、内存状态和模拟步骤展示；后端接口层负责解析 HTTP 请求参数、调用核心逻辑并返回 JSON；核心模拟层负责统一的 320 步请求调页执行流程；页面置换算法层分别实现 FIFO、LRU、CLOCK；类型与配置层保存课程固定参数和模拟结果结构。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 250" role="img" aria-label="系统总体架构图">
+          <defs>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+            <marker id="arrowHeadMuted" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#7c8797"/>
+            </marker>
+          </defs>
+          <rect class="box green" x="28" y="72" width="140" height="92" rx="8"/>
+          <text class="title" x="98" y="108">前端展示层</text>
+          <text class="desc" x="98" y="134">Vue 3 / Element Plus</text>
+          <rect class="box" x="218" y="72" width="140" height="92" rx="8"/>
+          <text class="title" x="288" y="108">API 接口层</text>
+          <text class="desc" x="288" y="134">Express 路由</text>
+          <rect class="box orange" x="408" y="72" width="140" height="92" rx="8"/>
+          <text class="title" x="478" y="108">核心模拟层</text>
+          <text class="desc" x="478" y="134">320 步执行流程</text>
+          <rect class="box violet" x="598" y="52" width="140" height="132" rx="8"/>
+          <text class="title" x="668" y="92">算法层</text>
+          <text class="desc" x="668" y="120">FIFO</text>
+          <text class="desc" x="668" y="143">LRU</text>
+          <text class="desc" x="668" y="166">CLOCK</text>
+          <rect class="box gray" x="760" y="72" width="112" height="92" rx="8"/>
+          <text class="title" x="816" y="108">配置与类型</text>
+          <text class="desc" x="816" y="134">常量 / 结构</text>
+          <path class="arrow" d="M168 118 L214 118"/>
+          <path class="arrow" d="M358 118 L404 118"/>
+          <path class="arrow" d="M548 118 L594 118"/>
+          <path class="muted-line" d="M816 164 C816 220 478 220 478 168"/>
+          <text class="tiny" x="456" y="218">课程参数和结果类型约束通用流程</text>
+        </svg>
+      </div>
+      <figcaption>图 2-1 系统总体架构</figcaption>
+    </figure>
+
+    <h3>2.2 技术栈选择</h3>
+    <table>
+      <thead>
+        <tr><th>技术</th><th>用途</th><th>选择原因</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>TypeScript</td><td>后端模拟逻辑、前端类型定义</td><td>通过类型约束明确指令号、页号、内存块号和模拟结果结构，降低状态传递错误。</td></tr>
+        <tr><td>Node.js + Express</td><td>HTTP API 服务</td><td>提供轻量接口，便于使用浏览器、前端和 curl 发起模拟请求。</td></tr>
+        <tr><td>Vue 3 + Element Plus</td><td>前端交互界面</td><td>适合展示算法选择、页表、内存块状态、换页过程和模拟记录表格。</td></tr>
+        <tr><td>Vitest</td><td>自动化测试</td><td>用于验证地址转换、访问序列、完整模拟流程和三种置换算法行为。</td></tr>
+        <tr><td>Electron</td><td>桌面客户端封装</td><td>将前端页面和后端模拟能力封装为可运行客户端，方便课程演示。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.3 分层职责</h3>
+    <table>
+      <thead>
+        <tr><th>层次</th><th>核心职责</th><th>对应模块</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>表示层</td><td>展示课程参数、算法选择、页表、内存块、换页过程和模拟记录。</td><td><code>frontend/src</code></td></tr>
+        <tr><td>接口层</td><td>接收 algorithm 和 seed 参数，返回课程配置、访问序列或模拟结果。</td><td><code>src/app.ts</code></td></tr>
+        <tr><td>核心模拟层</td><td>逐条访问指令，维护内存块、缺页次数和每一步结果。</td><td><code>src/core/simulator.ts</code></td></tr>
+        <tr><td>算法层</td><td>按统一接口处理命中和缺页，分别维护 FIFO、LRU、CLOCK 状态。</td><td><code>src/core/algorithms</code></td></tr>
+        <tr><td>类型与配置层</td><td>保存课程固定参数、地址类型、访问记录和模拟结果结构。</td><td><code>src/config</code>、<code>src/types</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 核心数据流</h3>
+    <p>用户在前端选择算法和 seed 后，前端向后端模拟接口发送请求。后端先校验算法名和 seed，再生成 320 条指令访问序列，并把序列交给模拟器。模拟器逐条读取指令，计算页号和页内偏移，判断该页是否已经在内存块中。若命中，则调用算法的命中处理函数更新算法内部状态；若缺页，则调用算法的缺页处理函数装入页面或执行置换。所有步骤执行完成后，后端返回完整步骤、缺页次数和缺页率。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 300" role="img" aria-label="请求调页单步执行流程图">
+          <defs>
+            <filter id="shadow2" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <g class="svg-diagram">
+            <rect class="box" x="32" y="98" width="116" height="74" rx="8"/>
+            <text class="title" x="90" y="127">取指令</text>
+            <text class="desc" x="90" y="151">instruction</text>
+            <rect class="box" x="190" y="98" width="138" height="74" rx="8"/>
+            <text class="title" x="259" y="127">计算页号</text>
+            <text class="desc" x="259" y="151">页号 / 偏移</text>
+            <rect class="box orange" x="370" y="98" width="138" height="74" rx="8"/>
+            <text class="title" x="439" y="127">查找内存</text>
+            <text class="desc" x="439" y="151">是否已装入</text>
+            <polygon points="592,82 684,135 592,188 500,135" fill="#fffaf0" stroke="#d29b45" stroke-width="1.6"/>
+            <text class="title" x="592" y="129">命中？</text>
+            <text class="desc" x="592" y="153">hit / fault</text>
+            <rect class="box green" x="734" y="42" width="132" height="68" rx="8"/>
+            <text class="title" x="800" y="70">计算物理地址</text>
+            <text class="desc" x="800" y="92">frame × 10 + offset</text>
+            <rect class="box violet" x="734" y="170" width="132" height="68" rx="8"/>
+            <text class="title" x="800" y="198">装入或置换</text>
+            <text class="desc" x="800" y="220">算法处理缺页</text>
+            <path d="M148 135 L186 135" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead2)"/>
+            <path d="M328 135 L366 135" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead2)"/>
+            <path d="M508 135 L500 135" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead2)"/>
+            <path d="M684 135 C704 135 706 76 730 76" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead2)"/>
+            <path d="M684 135 C704 135 706 204 730 204" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead2)"/>
+            <path d="M800 170 C800 140 800 134 800 114" fill="none" stroke="#7c8797" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowHead2)"/>
+            <text class="tiny" x="712" y="68">命中</text>
+            <text class="tiny" x="712" y="210">缺页</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption>图 2-2 请求调页单步执行流程</figcaption>
+    </figure>
+
+    <h3>2.5 状态模型</h3>
+    <table>
+      <thead>
+        <tr><th>状态字段</th><th>含义</th><th>用途</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>memoryFrames</td><td>4 个内存块当前装入的页号，空闲块页号为 null。</td><td>判断页面是否命中，并在缺页时记录装入或换出位置。</td></tr>
+        <tr><td>instructionNumber</td><td>当前访问的指令号，范围为 0 到 319。</td><td>用于计算页号和页内偏移。</td></tr>
+        <tr><td>pageNumber</td><td>当前指令所在页面。</td><td>用于查找页面是否已在内存中。</td></tr>
+        <tr><td>pageOffset</td><td>当前指令在页面内的偏移。</td><td>用于和内存块号组合成物理地址。</td></tr>
+        <tr><td>physicalAddress</td><td>命中或调入后得到的物理地址。</td><td>展示地址转换结果。</td></tr>
+        <tr><td>pageFaultCount</td><td>截至当前步骤累计缺页次数。</td><td>用于计算最终缺页率。</td></tr>
+        <tr><td>replacement</td><td>本次缺页时装入页、换出页和发生替换的内存块。</td><td>用于展示页面置换过程。</td></tr>
+        <tr><td>algorithmState</td><td>算法内部状态，如 FIFO 队列、LRU 最近使用队列、CLOCK 访问位和指针。</td><td>由具体算法模块维护，模拟器不关心其内部结构。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.6 设计优点</h3>
+    <p>本项目将算法与通用模拟流程解耦。模拟器只负责取指令、算页号、判断命中、记录结果等共同步骤，页面置换差异通过统一算法接口体现。这样新增算法时，只需要实现初始状态、命中处理和缺页处理，不需要重写完整模拟器，也便于为不同算法单独编写测试。</p>
+
+    <h2 class="section">3. 指令访问序列与地址转换</h2>
+    <h3>3.1 访问序列生成规则</h3>
+    <p>课程要求访问序列整体比例为：50% 顺序执行，25% 均匀分布在前地址部分，25% 均匀分布在后地址部分。项目采用可复现的随机数生成器支持 seed 参数，使相同 seed 可以生成相同访问序列，便于调试和测试。</p>
+
+    <h3>3.2 访问序列生成过程</h3>
+    <p>生成过程先在 0 到 319 中随机选择起始指令 m，然后顺序执行 m + 1；接着随机跳转到前地址部分 0..m-1 中的某条指令 m1，并顺序执行 m1 + 1；之后随机跳转到后地址部分 m1 + 2..319 中的某条指令 m2，并顺序执行 m2 + 1。随后重复前地址跳转、顺序执行、后地址跳转、顺序执行的模式，直到生成 320 条访问记录。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 230" role="img" aria-label="访问序列生成模式图">
+          <defs>
+            <filter id="shadow3" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <line x1="70" y1="146" x2="830" y2="146" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+          <text class="tiny" x="70" y="174">0</text>
+          <text class="tiny" x="830" y="174">319</text>
+          <rect class="box" x="410" y="104" width="86" height="54" rx="8"/>
+          <text class="title" x="453" y="128">m</text>
+          <text class="desc" x="453" y="148">起始</text>
+          <rect class="box green" x="508" y="104" width="86" height="54" rx="8"/>
+          <text class="title" x="551" y="128">m+1</text>
+          <text class="desc" x="551" y="148">顺序</text>
+          <rect class="box orange" x="170" y="46" width="96" height="54" rx="8"/>
+          <text class="title" x="218" y="70">m1</text>
+          <text class="desc" x="218" y="90">前地址跳转</text>
+          <rect class="box green" x="278" y="46" width="96" height="54" rx="8"/>
+          <text class="title" x="326" y="70">m1+1</text>
+          <text class="desc" x="326" y="90">顺序</text>
+          <rect class="box violet" x="646" y="46" width="96" height="54" rx="8"/>
+          <text class="title" x="694" y="70">m2</text>
+          <text class="desc" x="694" y="90">后地址跳转</text>
+          <rect class="box green" x="754" y="46" width="96" height="54" rx="8"/>
+          <text class="title" x="802" y="70">m2+1</text>
+          <text class="desc" x="802" y="90">顺序</text>
+          <path d="M496 124 L506 124" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead3)"/>
+          <path d="M508 108 C430 40 330 40 270 68" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead3)"/>
+          <path d="M266 73 L274 73" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead3)"/>
+          <path d="M374 73 C500 20 590 26 642 68" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead3)"/>
+          <path d="M742 73 L750 73" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead3)"/>
+        </svg>
+      </div>
+      <figcaption>图 3-1 访问序列生成模式</figcaption>
+    </figure>
+
+    <h3>3.3 分页地址转换公式</h3>
+    <p>由于每页可存放 10 条指令，逻辑地址中的指令号可以直接换算为页号和页内偏移。若页面已经装入内存，还可以进一步根据内存块号计算物理地址。</p>
+    <div class="formula">页号 = 指令号 ÷ 每页指令数（取整）</div>
+    <div class="formula">页内偏移 = 指令号 mod 每页指令数</div>
+    <div class="formula">物理地址 = 内存块号 × 每页指令数 + 页内偏移</div>
+
+    <h3>3.4 示例演算</h3>
+    <p>例如指令 127 所在页号为 127 ÷ 10 取整，即 12；页内偏移为 127 mod 10，即 7。若第 12 页当前装入内存块 2，则物理地址为 2 × 10 + 7 = 27。这个计算过程体现了分页存储中逻辑地址到物理地址的转换关系。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 250" role="img" aria-label="逻辑地址到物理地址转换图">
+          <defs>
+            <filter id="shadow4" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <rect class="box" x="40" y="86" width="140" height="78" rx="8"/>
+          <text class="title" x="110" y="116">指令号 127</text>
+          <text class="desc" x="110" y="142">逻辑地址</text>
+          <rect class="box orange" x="250" y="52" width="150" height="62" rx="8"/>
+          <text class="title" x="325" y="80">页号 12</text>
+          <text class="desc" x="325" y="101">127 ÷ 10</text>
+          <rect class="box green" x="250" y="142" width="150" height="62" rx="8"/>
+          <text class="title" x="325" y="170">页内偏移 7</text>
+          <text class="desc" x="325" y="191">127 mod 10</text>
+          <rect class="box violet" x="472" y="52" width="150" height="62" rx="8"/>
+          <text class="title" x="547" y="80">页表查询</text>
+          <text class="desc" x="547" y="101">页 12 在块 2</text>
+          <rect class="box" x="700" y="86" width="150" height="78" rx="8"/>
+          <text class="title" x="775" y="116">物理地址 27</text>
+          <text class="desc" x="775" y="142">2 × 10 + 7</text>
+          <path d="M180 125 L246 83" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead4)"/>
+          <path d="M180 125 L246 173" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead4)"/>
+          <path d="M400 83 L468 83" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead4)"/>
+          <path d="M622 83 C662 83 662 125 696 125" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead4)"/>
+          <path d="M400 173 C560 220 650 174 696 138" fill="none" stroke="#7c8797" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowHead4)"/>
+        </svg>
+      </div>
+      <figcaption>图 3-2 逻辑地址到物理地址转换</figcaption>
+    </figure>
+
+    <table>
+      <thead>
+        <tr><th>课程参数</th><th>取值</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>指令总数</td><td>320</td><td>作业执行过程中一共访问 320 条指令。</td></tr>
+        <tr><td>每页指令数</td><td>10</td><td>逻辑地址空间按每 10 条指令划分一页。</td></tr>
+        <tr><td>页面总数</td><td>32</td><td>320 条指令对应 32 个页面。</td></tr>
+        <tr><td>内存块数</td><td>4</td><td>主存最多同时装入 4 个页面。</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="section">4. 页面置换算法设计</h2>
+    <h3>4.1 页面置换触发条件</h3>
+    <p>页面置换只在访问页不在内存且 4 个内存块已经占满时触发。如果访问页已经在内存中，则属于命中，不增加缺页次数；如果访问页不在内存但仍有空闲内存块，则只需要把页面装入空闲块，不需要换出其他页面。只有缺页并且没有空闲块时，算法才需要选择一个牺牲页面。</p>
+
+    <h3>4.2 算法统一抽象</h3>
+    <p>三种算法都遵循统一入口：创建算法初始状态、处理页面命中、处理页面缺页。模拟器在每一步只判断是否命中，然后调用算法接口。命中时，算法可以更新自己的内部状态；缺页时，算法负责选择空闲块或替换块，并返回装入页、换出页和内存块号。该设计避免了在模拟器中为 FIFO、LRU、CLOCK 分别编写一套执行流程。</p>
+
+    <h3>4.3 FIFO 算法</h3>
+    <p>FIFO 算法的核心思想是最早进入内存的页面最先被换出。系统维护一个按进入内存时间排序的队列，队首页面对应最早装入的内存块，队尾对应最近装入的内存块。命中页面不改变队列顺序；缺页时，如果内存未满，则页面直接装入空闲块并把该块加入队尾；如果内存已满，则取出队首内存块，将其中页面换出，新页面装入该块后再把该块放入队尾。</p>
+    <p>FIFO 实现简单，维护成本低，但它不考虑页面最近是否被访问过，因此可能换出后续马上还会访问的页面。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 250" role="img" aria-label="FIFO 队列替换图">
+          <defs>
+            <filter id="shadow5" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <text class="title" x="450" y="36">进入内存顺序队列</text>
+          <rect class="box orange" x="86" y="86" width="110" height="76" rx="8"/>
+          <text class="title" x="141" y="116">页 2</text>
+          <text class="desc" x="141" y="142">最早进入</text>
+          <rect class="box" x="246" y="86" width="110" height="76" rx="8"/>
+          <text class="title" x="301" y="116">页 5</text>
+          <text class="desc" x="301" y="142">第二</text>
+          <rect class="box" x="406" y="86" width="110" height="76" rx="8"/>
+          <text class="title" x="461" y="116">页 8</text>
+          <text class="desc" x="461" y="142">第三</text>
+          <rect class="box green" x="566" y="86" width="110" height="76" rx="8"/>
+          <text class="title" x="621" y="116">页 11</text>
+          <text class="desc" x="621" y="142">最近进入</text>
+          <rect class="box violet" x="724" y="86" width="110" height="76" rx="8"/>
+          <text class="title" x="779" y="116">新页 14</text>
+          <text class="desc" x="779" y="142">进入队尾</text>
+          <path d="M196 124 L242 124" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead5)"/>
+          <path d="M356 124 L402 124" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead5)"/>
+          <path d="M516 124 L562 124" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead5)"/>
+          <path d="M676 124 L720 124" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead5)"/>
+          <path d="M141 164 C110 190 96 202 72 214" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrowHead5)"/>
+          <text class="desc" x="120" y="222">队首页面被换出</text>
+        </svg>
+      </div>
+      <figcaption>图 4-1 FIFO 队列替换</figcaption>
+    </figure>
+
+    <h3>4.4 LRU 算法</h3>
+    <p>LRU 算法的核心思想是换出最长时间没有被访问的页面。系统维护一个最近使用顺序队列，队首表示最久未使用的内存块，队尾表示最近使用的内存块。命中页面时，把命中的内存块移动到队尾；缺页且内存未满时，新页面装入空闲块并放到队尾；缺页且内存已满时，换出队首对应页面，再把新页面所在内存块移动到队尾。</p>
+    <p>LRU 更符合程序局部性原理，因为它利用了最近访问历史。其代价是需要在每次命中和装入时维护最近使用顺序。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 240" role="img" aria-label="LRU 命中更新图">
+          <defs>
+            <filter id="shadow6" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead6" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <text class="title" x="450" y="36">命中页 5 后，页 5 变为最近使用</text>
+          <rect class="box orange" x="84" y="80" width="110" height="68" rx="8"/>
+          <text class="title" x="139" y="108">页 2</text>
+          <text class="desc" x="139" y="130">最久未用</text>
+          <rect class="box violet" x="236" y="80" width="110" height="68" rx="8"/>
+          <text class="title" x="291" y="108">页 5</text>
+          <text class="desc" x="291" y="130">本次命中</text>
+          <rect class="box" x="388" y="80" width="110" height="68" rx="8"/>
+          <text class="title" x="443" y="108">页 8</text>
+          <text class="desc" x="443" y="130">较近</text>
+          <rect class="box green" x="540" y="80" width="110" height="68" rx="8"/>
+          <text class="title" x="595" y="108">页 11</text>
+          <text class="desc" x="595" y="130">最近</text>
+          <rect class="box violet" x="706" y="80" width="110" height="68" rx="8"/>
+          <text class="title" x="761" y="108">页 5</text>
+          <text class="desc" x="761" y="130">移动到队尾</text>
+          <path d="M346 114 C470 20 650 24 756 76" fill="none" stroke="#6d28d9" stroke-width="2.1" marker-end="url(#arrowHead6)"/>
+          <path d="M194 114 L232 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead6)"/>
+          <path d="M498 114 L536 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead6)"/>
+        </svg>
+      </div>
+      <figcaption>图 4-2 LRU 命中更新</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 240" role="img" aria-label="LRU 缺页替换图">
+          <defs>
+            <filter id="shadow7" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead7" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <text class="title" x="450" y="36">缺页时换出最久未使用页面</text>
+          <rect class="box orange" x="90" y="78" width="118" height="72" rx="8"/>
+          <text class="title" x="149" y="106">页 2</text>
+          <text class="desc" x="149" y="129">最久未使用</text>
+          <rect class="box" x="252" y="78" width="118" height="72" rx="8"/>
+          <text class="title" x="311" y="106">页 8</text>
+          <text class="desc" x="311" y="129">中间状态</text>
+          <rect class="box" x="414" y="78" width="118" height="72" rx="8"/>
+          <text class="title" x="473" y="106">页 11</text>
+          <text class="desc" x="473" y="129">较近使用</text>
+          <rect class="box green" x="576" y="78" width="118" height="72" rx="8"/>
+          <text class="title" x="635" y="106">页 5</text>
+          <text class="desc" x="635" y="129">最近使用</text>
+          <rect class="box violet" x="744" y="78" width="118" height="72" rx="8"/>
+          <text class="title" x="803" y="106">新页 14</text>
+          <text class="desc" x="803" y="129">成为最近</text>
+          <path d="M208 114 L248 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead7)"/>
+          <path d="M370 114 L410 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead7)"/>
+          <path d="M532 114 L572 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead7)"/>
+          <path d="M694 114 L740 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead7)"/>
+          <path d="M149 150 C128 178 96 192 70 206" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrowHead7)"/>
+          <text class="desc" x="132" y="218">换出页 2</text>
+        </svg>
+      </div>
+      <figcaption>图 4-3 LRU 缺页替换</figcaption>
+    </figure>
+
+    <h3>4.5 CLOCK 算法</h3>
+    <p>CLOCK 算法用访问位和循环指针近似 LRU。每个内存块维护一个访问位，页面被装入或命中时访问位置为 1。缺页且内存已满时，时钟指针从当前位置开始扫描：如果当前内存块访问位为 1，则把访问位清零并移动到下一个内存块，相当于给该页第二次机会；如果访问位为 0，则选择该块换出页面，新页面装入后访问位置为 1，指针移动到下一个位置。</p>
+    <p>CLOCK 的实现成本低于严格 LRU，不需要维护完整访问历史，但仍能通过访问位保留近期访问特征。</p>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 300" role="img" aria-label="CLOCK 初始状态图">
+          <defs>
+            <filter id="shadow8" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead8" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <circle cx="450" cy="150" r="92" fill="#ffffff" stroke="#cbd8e7" stroke-width="2"/>
+          <rect class="box" x="395" y="32" width="110" height="58" rx="8"/>
+          <text class="title" x="450" y="56">块 0：页 2</text>
+          <text class="desc" x="450" y="76">访问位 1</text>
+          <rect class="box" x="560" y="121" width="110" height="58" rx="8"/>
+          <text class="title" x="615" y="145">块 1：页 5</text>
+          <text class="desc" x="615" y="165">访问位 0</text>
+          <rect class="box" x="395" y="210" width="110" height="58" rx="8"/>
+          <text class="title" x="450" y="234">块 2：页 8</text>
+          <text class="desc" x="450" y="254">访问位 1</text>
+          <rect class="box" x="230" y="121" width="110" height="58" rx="8"/>
+          <text class="title" x="285" y="145">块 3：页 11</text>
+          <text class="desc" x="285" y="165">访问位 1</text>
+          <path d="M384 90 C360 112 352 132 348 150" fill="none" stroke="#c2410c" stroke-width="2.2" marker-end="url(#arrowHead8)"/>
+          <text class="desc" x="330" y="95">时钟指针</text>
+        </svg>
+      </div>
+      <figcaption>图 4-4 CLOCK 初始状态</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 250" role="img" aria-label="CLOCK 扫描过程图">
+          <defs>
+            <filter id="shadow9" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead9" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <rect class="box orange" x="80" y="88" width="150" height="76" rx="8"/>
+          <text class="title" x="155" y="118">指针到块 0</text>
+          <text class="desc" x="155" y="142">访问位 1</text>
+          <rect class="box" x="300" y="88" width="150" height="76" rx="8"/>
+          <text class="title" x="375" y="118">清零</text>
+          <text class="desc" x="375" y="142">访问位变为 0</text>
+          <rect class="box green" x="520" y="88" width="150" height="76" rx="8"/>
+          <text class="title" x="595" y="118">移动指针</text>
+          <text class="desc" x="595" y="142">检查下一块</text>
+          <path d="M230 126 L296 126" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead9)"/>
+          <path d="M450 126 L516 126" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead9)"/>
+          <path d="M595 164 C570 206 420 214 156 168" fill="none" stroke="#7c8797" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrowHead9)"/>
+          <text class="desc" x="440" y="216">访问位为 1 的页面获得第二次机会</text>
+        </svg>
+      </div>
+      <figcaption>图 4-5 CLOCK 扫描过程</figcaption>
+    </figure>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 250" role="img" aria-label="CLOCK 替换过程图">
+          <defs>
+            <filter id="shadow10" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead10" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <rect class="box orange" x="74" y="84" width="156" height="82" rx="8"/>
+          <text class="title" x="152" y="114">块 1：页 5</text>
+          <text class="desc" x="152" y="138">访问位 0</text>
+          <rect class="box violet" x="374" y="84" width="156" height="82" rx="8"/>
+          <text class="title" x="452" y="114">装入页 14</text>
+          <text class="desc" x="452" y="138">替换页 5</text>
+          <rect class="box green" x="674" y="84" width="156" height="82" rx="8"/>
+          <text class="title" x="752" y="114">指针后移</text>
+          <text class="desc" x="752" y="138">访问位置 1</text>
+          <path d="M230 125 L370 125" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead10)"/>
+          <path d="M530 125 L670 125" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead10)"/>
+          <text class="desc" x="452" y="204">访问位为 0 时不再跳过，直接选择该块完成置换</text>
+        </svg>
+      </div>
+      <figcaption>图 4-6 CLOCK 替换过程</figcaption>
+    </figure>
+
+    <h3>4.6 三种算法对比</h3>
+    <p>FIFO、LRU、CLOCK 的区别主要体现在替换依据和维护状态上。FIFO 依据页面进入内存时间，LRU 依据最近访问时间，CLOCK 则通过访问位和循环扫描近似最近访问时间。对于同一内存状态，不同算法可能选择不同页面换出，从而产生不同缺页次数和缺页率。</p>
+
+    <table>
+      <thead>
+        <tr><th>算法</th><th>核心依据</th><th>维护状态</th><th>命中处理</th><th>缺页处理</th><th>优点与不足</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>FIFO</td><td>进入内存时间</td><td>进入队列</td><td>不改变队列顺序</td><td>空闲时装入；满时换出队首</td><td>简单、开销小；不考虑近期访问。</td></tr>
+        <tr><td>LRU</td><td>最近访问时间</td><td>最近使用队列</td><td>命中块移动到队尾</td><td>空闲时装入；满时换出最久未使用页</td><td>符合局部性；需要维护访问历史。</td></tr>
+        <tr><td>CLOCK</td><td>访问位和循环指针</td><td>访问位数组、时钟指针</td><td>命中块访问位置 1</td><td>扫描访问位，遇 1 清零跳过，遇 0 替换</td><td>成本低于 LRU；只是近似最近访问。</td></tr>
+      </tbody>
+    </table>
+
+    <figure class="figure">
+      <div class="diagram-frame">
+        <svg class="svg-diagram" viewBox="0 0 900 300" role="img" aria-label="三种算法替换选择对比图">
+          <defs>
+            <filter id="shadow11" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#172033" flood-opacity="0.12"/>
+            </filter>
+            <marker id="arrowHead11" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#406a8f"/>
+            </marker>
+          </defs>
+          <text class="title" x="450" y="34">同一内存状态下的替换依据差异</text>
+          <rect class="box" x="70" y="72" width="760" height="58" rx="8"/>
+          <text class="title" x="450" y="96">当前内存：页 2、页 5、页 8、页 11；新访问页 14 发生缺页</text>
+          <text class="desc" x="450" y="118">不同算法依据不同状态选择牺牲页面</text>
+          <rect class="box orange" x="86" y="172" width="190" height="78" rx="8"/>
+          <text class="title" x="181" y="202">FIFO</text>
+          <text class="desc" x="181" y="226">换出最早进入的页 2</text>
+          <rect class="box violet" x="356" y="172" width="190" height="78" rx="8"/>
+          <text class="title" x="451" y="202">LRU</text>
+          <text class="desc" x="451" y="226">换出最久未访问页</text>
+          <rect class="box green" x="626" y="172" width="190" height="78" rx="8"/>
+          <text class="title" x="721" y="202">CLOCK</text>
+          <text class="desc" x="721" y="226">扫描到访问位 0 的页</text>
+          <path d="M310 130 L190 168" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead11)"/>
+          <path d="M450 130 L450 168" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead11)"/>
+          <path d="M590 130 L710 168" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead11)"/>
+        </svg>
+      </div>
+      <figcaption>图 4-7 三种算法对同一内存状态的替换选择对比</figcaption>
+    </figure>
+
+    <h2 class="section">5. 测试与结果验证</h2>
+    <h3>5.1 正确性验证</h3>
+    <p>项目通过自动测试和接口验证共同检查正确性。访问序列测试确认长度为 320，所有指令号都在 0 到 319 范围内，并验证相同 seed 生成相同序列。地址转换测试覆盖典型指令号和边界指令号，例如 0、9、10、319，保证页号、页内偏移和物理地址公式正确。模拟流程测试确认初始内存为空，首次访问某页必然缺页，命中页面不增加缺页次数。</p>
+
+    <h3>5.2 算法验证</h3>
+    <p>FIFO 测试重点验证先入先出替换顺序，以及命中不会改变 FIFO 队列顺序。LRU 测试重点验证命中后最近使用顺序会更新，缺页时换出最久未使用页面，并确认同一访问序列下 FIFO 和 LRU 可以产生不同结果。CLOCK 测试重点验证命中会设置访问位，指针会跳过访问位为 1 的页面，替换后指针位置会正确推进。</p>
+
+    <h3>5.3 运行验证</h3>
+    <p>后端提供 <code>GET /health</code>、<code>GET /api/config</code>、<code>GET /api/instructions?seed=1</code> 和 <code>GET /api/simulations?algorithm=fifo&amp;seed=1</code> 等接口，便于使用 curl 直接验证。模拟接口支持 <code>fifo</code>、<code>lru</code>、<code>clock</code> 三种算法，均可完成 320 步模拟并输出缺页次数、缺页率、访问序列和每一步模拟记录。非法算法名或非法 seed 会返回清晰的 400 响应。运行日志记录模拟开始、每一步命中或缺页、页面置换、物理地址、内存块状态、累计缺页次数和模拟结束统计。</p>
+
+    <table>
+      <thead>
+        <tr><th>测试内容</th><th>验证目标</th><th>验证方式</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>访问序列生成</td><td>长度为 320，范围为 0..319，相同 seed 可复现。</td><td>Vitest、curl</td></tr>
+        <tr><td>地址转换</td><td>页号、页内偏移、物理地址计算正确。</td><td>Vitest 单元测试</td></tr>
+        <tr><td>模拟基础流程</td><td>初始内存为空，缺页和命中状态正确。</td><td>Vitest 单元测试</td></tr>
+        <tr><td>FIFO</td><td>验证先入先出顺序和命中不改变队列。</td><td>算法测试</td></tr>
+        <tr><td>LRU</td><td>验证最近使用顺序更新和最久未使用替换。</td><td>算法测试</td></tr>
+        <tr><td>CLOCK</td><td>验证访问位清零、指针跳过和替换位置推进。</td><td>算法测试</td></tr>
+        <tr><td>API 参数校验</td><td>非法算法名、非法 seed 返回 400。</td><td>接口测试</td></tr>
+        <tr><td>完整运行</td><td>三种算法均能返回完整 320 步结果。</td><td>Vitest、curl、前端比对</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="section">6. 总结</h2>
+    <p>本项目实现了课程要求中的请求调页执行过程，能够展示指令访问、地址转换、缺页处理、页面置换和缺页率统计。系统以 320 条指令、32 页地址空间、4 个内存块为固定课程参数，通过可复现随机访问序列模拟作业执行，并完整记录每一步命中、缺页、装入、换出和物理地址。</p>
+    <p>系统结构将通用模拟器和具体页面置换算法拆分，使 FIFO、LRU、CLOCK 的差异更容易观察和验证。FIFO 体现按进入时间替换，LRU 体现按最近访问历史替换，CLOCK 体现通过访问位和时钟指针近似 LRU。后端 API、日志、curl 验证、Vitest 测试、Vue 前端和 Electron 打包共同构成工程支撑，使项目既能用于课程演示，也便于继续扩展。</p>
+    <p>后续可以增加多 seed 缺页率统计、三种算法缺页率对比图表、逐步播放动画、导出实验结果等功能，使页面置换算法的性能差异和动态过程展示更加直观。</p>
+
+    <h2 class="section">附录</h2>
+    <h3>附录 A：运行命令</h3>
+    <pre><code>npm install
+npm run dev:server
+npm run dev:web</code></pre>
+
+    <h3>附录 B：主要接口示例</h3>
+    <pre><code>curl 'http://localhost:3000/health'
+curl 'http://localhost:3000/api/config'
+curl 'http://localhost:3000/api/instructions?seed=1'
+curl 'http://localhost:3000/api/simulations?algorithm=fifo&amp;seed=1'
+curl 'http://localhost:3000/api/simulations?algorithm=lru&amp;seed=1'
+curl 'http://localhost:3000/api/simulations?algorithm=clock&amp;seed=1'</code></pre>
+
+    <h3>附录 C：测试命令</h3>
+    <pre><code>npm test
+npm run build
+npm run build:web
+npm run build:electron
+npm run electron:pack</code></pre>
+
+    <h3>附录 D：核心目录结构</h3>
+    <pre><code>src/                    后端 API、分页模拟核心逻辑
+src/core/algorithms/    FIFO、LRU、CLOCK 页面置换算法
+frontend/src/           Vue 前端
+electron/               Electron 主进程
+tests/                  Vitest 测试
+docs/                   课程说明、实现计划和学习笔记</code></pre>
+  </main>
+</body>
+</html>
