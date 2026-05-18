@@ -38,6 +38,11 @@ describe("executeFifoStep", () => {
         expect(result.pageOffset).toBe(5);
         expect(result.memoryFrameNumber).toBe(0);
         expect(result.physicalAddress).toBe(5);
+        expect(result.replacement).toEqual({
+            frameNumber: 0,
+            loadedPageNumber: 2,
+            evictedPageNumber: null,
+        });
         expect(result.pageFaultCount).toBe(1);
     });
 
@@ -59,6 +64,7 @@ describe("executeFifoStep", () => {
         expect(repeatedAccess.isPageFault).toBe(false);
         expect(repeatedAccess.memoryFrameNumber).toBe(0);
         expect(repeatedAccess.physicalAddress).toBe(6);
+        expect(repeatedAccess.replacement).toBeNull();
         expect(repeatedAccess.pageFaultCount).toBe(1);
     });
 });

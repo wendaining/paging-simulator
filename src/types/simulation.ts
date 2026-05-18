@@ -19,6 +19,12 @@ export interface SimulationState {
     pageFaultCount: number;
 }
 
+export interface PageReplacement {
+    frameNumber: MemoryFrameNumber;
+    loadedPageNumber: PageNumber;
+    evictedPageNumber: PageNumber | null;
+}
+
 export interface SimulationStep {
     step: number;
     instruction: InstructionAccess;
@@ -27,6 +33,7 @@ export interface SimulationStep {
     memoryFrameNumber: MemoryFrameNumber;
     physicalAddress: PhysicalAddress;
     isPageFault: boolean;
+    replacement: PageReplacement | null;
     pageFaultCount: number;
     memoryFrames: MemoryFrameSnapshot[];
 }

@@ -646,3 +646,154 @@ curl 'http://localhost:3000/api/simulations?algorithm=fifo&seed=1'
 - 使用 seed 生成的完整访问序列可以跑出 320 步模拟结果。
 
 当前 `npm test` 已通过，说明基础模拟流程已经跑通。
+
+## 第六阶段：实现 FIFO 页面置换
+
+本阶段把 FIFO 页面置换信息补完整了。上一阶段已经能完成基础替换，但结果里还没有明确记录“换出了谁、装入了谁、发生在哪个内存块”。这一阶段补上了这些字段和测试。
+
+### FIFO 的核心思想
+
+FIFO 是 First In, First Out，也就是“先进先出”。
+
+在页面置换里，它的意思是：
+
+```text
+最早进入内存的页面，最先被换出。
+```
+
+本项目用 `fifoQueue` 保存内存块进入使用状态的顺序。队列里存的是内存块号，不是页号。
+
+例如主存有 4 个内存块，依次装入页面后：
+
+```text
+fifoQueue = [0, 1, 2, 3]
+```
+
+这表示：
+
+- 内存块 `0` 最早被使用。
+- 内存块 `1` 第二个被使用。
+- 内存块 `2` 第三个被使用。
+- 内存块 `3` 最晚被使用。
+
+如果这时又发生缺页，并且内存已满，就取出队头 `0`，替换内存块 `0` 中的页面，再把 `0` 放回队尾：
+
+```text
+fifoQueue = [1, 2, 3, 0]
+```
+
+### 为什么队列里存内存块号
+
+页面置换真正要修改的是某个内存块里的页面。
+
+比如内存块 `0` 原来放的是页面 `7`，现在要装入页面 `13`，那么变化是：
+
+```text
+frameNumber: 0
+evictedPageNumber: 7
+loadedPageNumber: 13
+```
+
+所以 FIFO 队列保存内存块号很直接：队头告诉我们下一次应该替换哪个内存块。
+
+### 新增 replacement 字段
+
+现在每一步模拟结果里新增了：
+
+```ts
+export interface PageReplacement {
+    frameNumber: MemoryFrameNumber;
+    loadedPageNumber: PageNumber;
+    evictedPageNumber: PageNumber | null;
+}
+```
+
+它表示本次访问如果发生缺页，页面装入或置换的细节。
+
+字段含义：
+
+- `frameNumber`：发生装入或置换的内存块号。
+- `loadedPageNumber`：新装入的页号。
+- `evictedPageNumber`：被换出的页号。如果内存还没满，只是装入空闲块，这里就是 `null`。
+
+如果本次访问命中内存，没有发生缺页，那么 `replacement` 是 `null`。
+
+### 状态变化示例
+
+第一次访问指令 `25`：
+
+- 指令 `25` 属于页面 `2`。
+- 页面 `2` 不在内存中，所以发生缺页。
+- 内存块 `0` 是空闲的，所以页面 `2` 装入内存块 `0`。
+
+对应的 `replacement` 是：
+
+```json
+{
+  "frameNumber": 0,
+  "loadedPageNumber": 2,
+  "evictedPageNumber": null
+}
+```
+
+当内存已经满了以后，如果 FIFO 队头是内存块 `0`，内存块 `0` 原来放页面 `7`，现在装入页面 `13`，则：
+
+```json
+{
+  "frameNumber": 0,
+  "loadedPageNumber": 13,
+  "evictedPageNumber": 7
+}
+```
+
+### 命中不会改变 FIFO 队列
+
+FIFO 只关心页面进入内存的先后顺序，不关心页面最近有没有被访问。
+
+所以如果某次访问命中了已经在内存中的页面：
+
+- 不增加缺页次数。
+- 不替换页面。
+- 不改变 `fifoQueue` 顺序。
+- `replacement` 为 `null`。
+
+这点和后面要实现的 LRU 不一样。LRU 会在命中时更新“最近使用”状态。
+
+### curl 验证
+
+为了避免终端输出完整 320 步 JSON，本阶段验证时把响应写入了 `/tmp/paging-simulation.json`：
+
+```bash
+curl -s -o /tmp/paging-simulation.json -w '%{http_code} %{size_download}\n' 'http://localhost:3000/api/simulations?algorithm=fifo&seed=1'
+```
+
+返回状态码是 `200`，说明接口正常。
+
+随后读取 JSON 的关键信息，确认：
+
+```json
+{
+  "algorithm": "fifo",
+  "seed": 1,
+  "steps": 320,
+  "pageFaultCount": 146,
+  "firstReplacement": {
+    "frameNumber": 0,
+    "loadedPageNumber": 13,
+    "evictedPageNumber": 7
+  }
+}
+```
+
+这说明完整模拟能跑 320 步，并且已经记录了真实页面置换信息。
+
+### 本阶段测试
+
+本阶段继续扩展了 `tests/simulator.test.ts`：
+
+- 验证内存未满时，缺页会装入空闲内存块。
+- 验证内存已满时，FIFO 会替换最早进入的内存块。
+- 验证命中页面时不会改变 FIFO 队列顺序。
+- 验证完整模拟仍然能生成 320 步。
+
+当前 `npm test` 已通过，说明 FIFO 页面置换行为符合当前阶段要求。
