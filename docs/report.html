@@ -235,6 +235,15 @@
       background: #ffffff;
     }
 
+    .report-image {
+      display: block;
+      width: 100%;
+      max-height: 560px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: #ffffff;
+    }
+
     .figure figcaption {
       margin-top: 10px;
       color: var(--muted);
@@ -501,6 +510,13 @@
       </tbody>
     </table>
 
+    <p>前端界面围绕“发起模拟、观察状态、核对结果”三个动作组织。页面顶部提供算法选择、seed 输入和运行按钮；中部展示课程参数、缺页次数、缺页率、页表和内存块状态；下方展示换页过程和完整模拟记录。这样可以把后端返回的结构化模拟结果直接转化为可观察的课程实验过程。</p>
+
+    <figure class="figure">
+      <img class="report-image" src="../img/页面展示.png" alt="请求调页模拟程序前端页面展示">
+      <figcaption>图 2-2 请求调页模拟程序前端页面展示</figcaption>
+    </figure>
+
     <h3>2.4 核心数据流</h3>
     <p>用户在前端选择算法和 seed 后，前端向后端模拟接口发送请求。后端先校验算法名和 seed，再生成 320 条指令访问序列，并把序列交给模拟器。模拟器逐条读取指令，计算页号和页内偏移，判断该页是否已经在内存块中。若命中，则调用算法的命中处理函数更新算法内部状态；若缺页，则调用算法的缺页处理函数装入页面或执行置换。所有步骤执行完成后，后端返回完整步骤、缺页次数和缺页率。</p>
 
@@ -545,7 +561,7 @@
           </g>
         </svg>
       </div>
-      <figcaption>图 2-2 请求调页单步执行流程</figcaption>
+      <figcaption>图 2-3 请求调页单步执行流程</figcaption>
     </figure>
 
     <h3>2.5 状态模型</h3>
@@ -681,6 +697,13 @@
     <h3>4.2 算法统一抽象</h3>
     <p>三种算法都遵循统一入口：创建算法初始状态、处理页面命中、处理页面缺页。模拟器在每一步只判断是否命中，然后调用算法接口。命中时，算法可以更新自己的内部状态；缺页时，算法负责选择空闲块或替换块，并返回装入页、换出页和内存块号。该设计避免了在模拟器中为 FIFO、LRU、CLOCK 分别编写一套执行流程。</p>
 
+    <p>为了让页面置换过程能够逐步观察，前端把完整 320 步模拟记录与滑块控件关联。拖动滑块时，界面只展示当前步骤对应的指令号、页号、页内偏移、内存块状态和换页信息，因此可以按时间顺序查看一次命中、一次缺页或一次替换发生时系统状态如何变化。</p>
+
+    <figure class="figure">
+      <img class="report-image" src="../img/换页过程拖动滑块展示.png" alt="换页过程拖动滑块展示">
+      <figcaption>图 4-1 换页过程拖动滑块展示</figcaption>
+    </figure>
+
     <h3>4.3 FIFO 算法</h3>
     <p>FIFO 算法的核心思想是最早进入内存的页面最先被换出。系统维护一个按进入内存时间排序的队列，队首页面对应最早装入的内存块，队尾对应最近装入的内存块。命中页面不改变队列顺序；缺页时，如果内存未满，则页面直接装入空闲块并把该块加入队尾；如果内存已满，则取出队首内存块，将其中页面换出，新页面装入该块后再把该块放入队尾。</p>
     <p>FIFO 实现简单，维护成本低，但它不考虑页面最近是否被访问过，因此可能换出后续马上还会访问的页面。</p>
@@ -720,7 +743,7 @@
           <text class="desc" x="120" y="222">队首页面被换出</text>
         </svg>
       </div>
-      <figcaption>图 4-1 FIFO 队列替换</figcaption>
+      <figcaption>图 4-2 FIFO 队列替换</figcaption>
     </figure>
 
     <h3>4.4 LRU 算法</h3>
@@ -759,7 +782,7 @@
           <path d="M498 114 L536 114" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead6)"/>
         </svg>
       </div>
-      <figcaption>图 4-2 LRU 命中更新</figcaption>
+      <figcaption>图 4-3 LRU 命中更新</figcaption>
     </figure>
 
     <figure class="figure">
@@ -797,7 +820,7 @@
           <text class="desc" x="132" y="218">换出页 2</text>
         </svg>
       </div>
-      <figcaption>图 4-3 LRU 缺页替换</figcaption>
+      <figcaption>图 4-4 LRU 缺页替换</figcaption>
     </figure>
 
     <h3>4.5 CLOCK 算法</h3>
@@ -832,7 +855,7 @@
           <text class="desc" x="330" y="95">时钟指针</text>
         </svg>
       </div>
-      <figcaption>图 4-4 CLOCK 初始状态</figcaption>
+      <figcaption>图 4-5 CLOCK 初始状态</figcaption>
     </figure>
 
     <figure class="figure">
@@ -861,7 +884,7 @@
           <text class="desc" x="440" y="216">访问位为 1 的页面获得第二次机会</text>
         </svg>
       </div>
-      <figcaption>图 4-5 CLOCK 扫描过程</figcaption>
+      <figcaption>图 4-6 CLOCK 扫描过程</figcaption>
     </figure>
 
     <figure class="figure">
@@ -889,7 +912,7 @@
           <text class="desc" x="452" y="204">访问位为 0 时不再跳过，直接选择该块完成置换</text>
         </svg>
       </div>
-      <figcaption>图 4-6 CLOCK 替换过程</figcaption>
+      <figcaption>图 4-7 CLOCK 替换过程</figcaption>
     </figure>
 
     <h3>4.6 三种算法对比</h3>
@@ -935,7 +958,7 @@
           <path d="M590 130 L710 168" fill="none" stroke="#406a8f" stroke-width="2.1" marker-end="url(#arrowHead11)"/>
         </svg>
       </div>
-      <figcaption>图 4-7 三种算法对同一内存状态的替换选择对比</figcaption>
+      <figcaption>图 4-8 三种算法对同一内存状态的替换选择对比</figcaption>
     </figure>
 
     <h2 class="section">5. 测试与结果验证</h2>
@@ -947,6 +970,13 @@
 
     <h3>5.3 运行验证</h3>
     <p>后端提供 <code>GET /health</code>、<code>GET /api/config</code>、<code>GET /api/instructions?seed=1</code> 和 <code>GET /api/simulations?algorithm=fifo&amp;seed=1</code> 等接口，便于使用 curl 直接验证。模拟接口支持 <code>fifo</code>、<code>lru</code>、<code>clock</code> 三种算法，均可完成 320 步模拟并输出缺页次数、缺页率、访问序列和每一步模拟记录。非法算法名或非法 seed 会返回清晰的 400 响应。运行日志记录模拟开始、每一步命中或缺页、页面置换、物理地址、内存块状态、累计缺页次数和模拟结束统计。</p>
+
+    <p>前端的模拟记录表格用于核对后端返回的每一步结果。表格按执行序号列出指令号、页号、页内偏移、是否缺页、物理地址和换页信息，可以直接观察首次访问页面是否缺页、命中页面是否保持缺页次数不变，以及发生替换时换出页和装入页是否符合当前算法规则。</p>
+
+    <figure class="figure">
+      <img class="report-image" src="../img/模拟记录表格展示.png" alt="模拟记录表格展示">
+      <figcaption>图 5-1 模拟记录表格展示</figcaption>
+    </figure>
 
     <table>
       <thead>
