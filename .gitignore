@@ -76,3 +76,6 @@ temp/
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+
+.codex/
+.claude/
