@@ -1047,3 +1047,108 @@ curl -s -o /tmp/paging-clock.json -w '%{http_code} %{size_download}\n' 'http://l
 - 指针扫描时会跳过访问位为 `1` 的页面，并把它们清为 `0`。
 - 替换页面后，CLOCK 指针会推进到下一个内存块。
 - `runSimulation("clock", 1)` 可以生成完整的 320 步模拟结果。
+
+## 第 9 阶段：完善 API 返回结构和日志
+
+本阶段统一了 `GET /api/simulations` 的返回结构。前端之后不需要为 FIFO、LRU、CLOCK 分别写不同的数据解析逻辑，只要读取同一组字段即可。
+
+### 统一返回结构
+
+模拟接口现在会返回：
+
+```ts
+interface SimulationResult {
+    algorithm: ReplacementAlgorithm;
+    seed: number;
+    config: CourseConfigSnapshot;
+    instructions: InstructionAccess[];
+    pageFaultCount: number;
+    pageFaultRate: number;
+    steps: SimulationStep[];
+}
+```
+
+这些字段的含义是：
+
+- `algorithm`：本次模拟使用的页面置换算法。
+- `seed`：本次访问序列使用的随机数种子。
+- `config`：课程固定配置，包括指令总数、每页指令数、页面总数和内存块数。
+- `instructions`：完整访问序列。
+- `steps`：每一步模拟执行记录。
+- `pageFaultCount`：总缺页次数。
+- `pageFaultRate`：缺页率，计算公式是 `pageFaultCount / instructions.length`。
+
+### 参数错误和 400
+
+`/api/simulations` 仍然只支持：
+
+```text
+fifo
+lru
+clock
+```
+
+如果传入不支持的算法，例如：
+
+```bash
+curl 'http://localhost:3000/api/simulations?algorithm=random&seed=1'
+```
+
+接口会返回 `400`，响应体包含错误说明。
+
+如果 `seed` 不是整数，例如：
+
+```bash
+curl 'http://localhost:3000/api/simulations?algorithm=fifo&seed=abc'
+```
+
+接口也会返回 `400`，说明 `seed 必须是整数`。
+
+### 日志内容
+
+本阶段把模拟日志分成四类：
+
+- `[simulation start]`：一次模拟开始，记录算法、seed 和访问序列长度。
+- `[simulation step]`：每一步访问，记录指令号、页号、内存块、命中或缺页、当前缺页次数。
+- `[simulation replacement]`：发生页面置换时，记录内存块、换出页和装入页。
+- `[simulation end]`：一次模拟结束，记录总缺页次数和缺页率。
+
+这些日志只在 API 路由层输出，核心算法仍然只负责计算结果。这样做的好处是：算法测试不会被日志影响，真实 API 请求又能看到完整执行过程。
+
+### curl 验证
+
+本阶段验证 FIFO 接口时，把完整响应写入 `/tmp/paging-api-stage9.json`：
+
+```bash
+curl -s -o /tmp/paging-api-stage9.json -w '%{http_code} %{size_download}\n' 'http://localhost:3000/api/simulations?algorithm=fifo&seed=1'
+```
+
+关键结果：
+
+```json
+{
+  "algorithm": "fifo",
+  "seed": 1,
+  "config": {
+    "totalInstructions": 320,
+    "instructionsPerPage": 10,
+    "totalPages": 32,
+    "memoryFrameCount": 4
+  },
+  "instructions": 320,
+  "steps": 320,
+  "pageFaultCount": 146,
+  "pageFaultRate": 0.45625
+}
+```
+
+### 本阶段测试
+
+本阶段新增了 `tests/api.test.ts`，覆盖了：
+
+- 不支持的算法会返回 `400`。
+- 非法 seed 会返回 `400`。
+- FIFO、LRU、CLOCK 三种算法都能返回完整模拟结果。
+- 缺页率等于 `pageFaultCount / instructions.length`。
+
+同时扩展了 `tests/simulator.test.ts`，确认核心模拟结果也包含课程配置、访问序列和缺页率。

@@ -8,6 +8,13 @@ import type { InstructionAccess } from "./instruction.js";
 
 export type ReplacementAlgorithm = "fifo" | "lru" | "clock";
 
+export interface CourseConfigSnapshot {
+    totalInstructions: number;
+    instructionsPerPage: number;
+    totalPages: number;
+    memoryFrameCount: number;
+}
+
 export interface MemoryFrameSnapshot {
     frameNumber: MemoryFrameNumber;
     pageNumber: PageNumber | null;
@@ -48,6 +55,9 @@ export interface SimulationStep {
 export interface SimulationResult {
     algorithm: ReplacementAlgorithm;
     seed: number;
+    config: CourseConfigSnapshot;
+    instructions: InstructionAccess[];
     pageFaultCount: number;
+    pageFaultRate: number;
     steps: SimulationStep[];
 }

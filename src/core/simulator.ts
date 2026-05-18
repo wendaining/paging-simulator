@@ -1,4 +1,4 @@
-import { MEMORY_FRAME_COUNT } from "../config/constants.js";
+import { COURSE_CONFIG, MEMORY_FRAME_COUNT } from "../config/constants.js";
 import { getReplacementAlgorithm } from "./algorithms/index.js";
 import { getPageNumber, getPageOffset, getPhysicalAddress } from "./address.js";
 import { generateInstructionSequence } from "./instructions.js";
@@ -123,7 +123,10 @@ export function simulateInstructions(
 
     return {
         algorithm: algorithm.name,
+        config: COURSE_CONFIG,
+        instructions,
         pageFaultCount: state.pageFaultCount,
+        pageFaultRate: state.pageFaultCount / instructions.length,
         steps,
     };
 }

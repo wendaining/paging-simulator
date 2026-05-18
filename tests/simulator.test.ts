@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { FIFO_ALGORITHM } from "../src/core/algorithms/fifo.js";
 import { LRU_ALGORITHM } from "../src/core/algorithms/lru.js";
+import { COURSE_CONFIG } from "../src/config/constants.js";
 import {
     createInitialSimulationState,
     executeSimulationStep,
@@ -114,6 +115,9 @@ describe("simulateInstructions", () => {
         expect(result.algorithm).toBe("fifo");
         expect(result.steps).toHaveLength(3);
         expect(result.pageFaultCount).toBe(2);
+        expect(result.config).toEqual(COURSE_CONFIG);
+        expect(result.instructions).toEqual(instructions);
+        expect(result.pageFaultRate).toBe(2 / 3);
     });
 });
 
@@ -123,7 +127,10 @@ describe("runSimulation", () => {
 
         expect(result.algorithm).toBe("fifo");
         expect(result.seed).toBe(1);
+        expect(result.config).toEqual(COURSE_CONFIG);
+        expect(result.instructions).toHaveLength(320);
         expect(result.steps).toHaveLength(320);
         expect(result.pageFaultCount).toBeGreaterThan(0);
+        expect(result.pageFaultRate).toBe(result.pageFaultCount / result.instructions.length);
     });
 });
