@@ -12,6 +12,7 @@
 
 ## 1. 建立最小可运行后端
 
+- [ ] 先检查本机的环境
 - [ ] 初始化 Node.js + TypeScript 项目。
 - [ ] 安装 Express、TypeScript、后端开发启动工具和 Vitest。
 - [ ] 建立 `src/server.ts`，负责启动 Express 服务。
