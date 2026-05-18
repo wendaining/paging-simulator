@@ -262,3 +262,113 @@ curl http://localhost:3000/api/config
 本阶段用 Vitest 测试了 `COURSE_CONFIG` 的值，确认它和课程要求一致。
 
 当前测试没有在测试进程里启动真实端口，因为当前运行环境不允许测试进程临时监听端口。真实 HTTP 接口已经通过 `npm run dev` 加 curl 的方式验证。
+
+## 第三阶段：实现地址转换逻辑
+
+本阶段实现了分页系统里最基础的地址转换逻辑。代码主要放在两个文件中：
+
+- `src/types/address.ts`：定义地址相关类型。
+- `src/core/address.ts`：实现地址转换函数。
+
+### 为什么先定义类型
+
+`src/types/address.ts` 里定义了这些类型：
+
+```ts
+export type InstructionNumber = number;
+export type PageNumber = number;
+export type PageOffset = number;
+export type MemoryFrameNumber = number;
+export type PhysicalAddress = number;
+```
+
+它们底层都是 `number`，但是名字不同，表达的含义不同。
+
+例如 `InstructionNumber` 表示指令号，`PageNumber` 表示页号，`PhysicalAddress` 表示物理地址。这样写代码时更容易看懂函数参数和返回值的含义。
+
+### 指令号转页号
+
+课程规定每页存放 10 条指令，所以页号公式是：
+
+```text
+页号 = Math.floor(指令号 / 每页指令数)
+```
+
+例如：
+
+- 指令 `0` 到 `9` 都在第 `0` 页。
+- 指令 `10` 到 `19` 都在第 `1` 页。
+- 指令 `319` 在第 `31` 页。
+
+代码中对应函数是：
+
+```ts
+export function getPageNumber(instructionNumber: InstructionNumber): PageNumber
+```
+
+### 指令号转页内偏移
+
+页内偏移表示“这条指令在当前页面里的第几个位置”。公式是：
+
+```text
+页内偏移 = 指令号 % 每页指令数
+```
+
+例如：
+
+- 指令 `0` 的页内偏移是 `0`。
+- 指令 `9` 的页内偏移是 `9`。
+- 指令 `10` 的页内偏移又回到 `0`。
+- 指令 `319` 的页内偏移是 `9`。
+
+代码中对应函数是：
+
+```ts
+export function getPageOffset(instructionNumber: InstructionNumber): PageOffset
+```
+
+### 内存块号和页内偏移转物理地址
+
+当某个页面被装入主存的某个内存块后，物理地址由“内存块起始位置 + 页内偏移”组成。
+
+因为每个内存块也能放 10 条指令，所以公式是：
+
+```text
+物理地址 = 内存块号 * 每页指令数 + 页内偏移
+```
+
+例如：
+
+- 内存块 `0`、页内偏移 `0`，物理地址是 `0`。
+- 内存块 `2`、页内偏移 `5`，物理地址是 `25`。
+- 内存块 `3`、页内偏移 `9`，物理地址是 `39`。
+
+代码中对应函数是：
+
+```ts
+export function getPhysicalAddress(
+    memoryFrameNumber: MemoryFrameNumber,
+    pageOffset: PageOffset,
+): PhysicalAddress
+```
+
+### 为什么要校验参数
+
+地址转换函数里还写了参数校验，例如：
+
+- 指令号必须是 `0..319` 之间的整数。
+- 页内偏移必须是 `0..9` 之间的整数。
+- 内存块号必须是 `0..3` 之间的整数。
+
+如果传入非法值，函数会抛出 `RangeError`。这样可以尽早发现错误，避免后续模拟器拿着错误地址继续计算。
+
+### 本阶段测试
+
+本阶段新增了 `tests/address.test.ts`，覆盖了：
+
+- 典型指令号，例如 `25`、`137`。
+- 边界指令号，例如 `0`、`9`、`10`、`319`。
+- 物理地址计算，例如内存块 `2` 加页内偏移 `5` 得到物理地址 `25`。
+- 非法输入，例如 `-1`、`320`、非整数、非法内存块号、非法页内偏移。
+
+当前 `npm test` 已通过，说明地址转换逻辑符合课程设定。
