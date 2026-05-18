@@ -120,42 +120,6 @@ npm run build:web
 npm run build:electron
 ```
 
-## Electron
-
-开发式启动 Electron：
-
-```bash
-npm run electron:dev
-```
-
-生成 Linux 解包目录：
-
-```bash
-npm run electron:pack
-```
-
-产物目录：
-
-```text
-release/linux-unpacked
-```
-
-生成正式安装包：
-
-```bash
-npm run electron:dist
-```
-
-Electron 主进程会启动内置 Express 服务，复用后端 `createApp()`，并托管前端构建产物 `dist-web`。因此 Electron 客户端里仍然使用同一套 `/api/config` 和 `/api/simulations` 请求路径。
-
-如果在 WSL 或无图形环境中直接运行 Electron，可能会出现：
-
-```text
-Missing X server or $DISPLAY
-```
-
-这是图形环境限制。需要在有桌面环境的 Linux、Windows，或配置好 X server 的 WSL 中打开客户端窗口。
-
 ## 常用完整验证流程
 
 ```bash
